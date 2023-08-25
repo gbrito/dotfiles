@@ -1,0 +1,4 @@
+image=~/Pictures/odin-dark.jpg
+daemonize
+indicator-radius=160
+indicator-thickness=20

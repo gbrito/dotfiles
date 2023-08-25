@@ -1,0 +1,12 @@
+alias odoo16_venv="/opt/odoo16/odoo16-venv/bin/python3"
+alias odoo15_venv="/opt/odoo15/odoo15-venv/bin/python3"
+alias odoo14_venv="/opt/odoo14/odoo14-venv/bin/python3"
+alias odoo13_venv="/opt/odoo13/odoo13-venv/bin/python3"
+alias odoo12_venv="/opt/odoo12/odoo12-venv/bin/python3"
+alias odoo11_venv="/opt/odoo11/odoo11-venv/bin/python3"
+
+alias odoo16="odoo16_venv /opt/odoo16/odoo/odoo-bin"
+alias odoo15="odoo15_venv /opt/odoo15/odoo/odoo-bin"
+alias odoo14="odoo14_venv /opt/odoo14/odoo/odoo-bin"
+alias odoo13="odoo13_venv /opt/odoo13/odoo/odoo-bin"
+alias odoo12="odoo12_venv /opt/odoo12/odoo/odoo-bin"

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+for dir in /opt/odoo*/
+do
+    odoo_dir="${dir}odoo"
+    enterprise_dir="${dir}odoo-enterprise-addons"
+    themes_dir="${dir}design-themes"
+    if [ -d "$odoo_dir" ]; then
+        echo "Updating ${odoo_dir}"
+        git -C $odoo_dir pull
+    fi
+    if [ -d "$enterprise_dir" ]; then
+        echo "Updating ${enterprise_dir}"
+        git -C $enterprise_dir pull
+    fi
+    if [ -d "$themes_dir" ]; then
+        echo "Updating ${themes_dir}"
+        git -C $themes_dir pull
+    fi
+done
+
