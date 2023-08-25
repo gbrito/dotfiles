@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+function oca_mig_module {
+    if [[ $# -ne 3 ]]; then
+        echo "You must provide an module name, orgin and destiny"
+        return 1
+    fi
+    module=$1
+    origin=$2
+    destiny=$3
+    echo "Pulling module $module from $origin to $destiny"
+    git checkout -b $destiny-mig-$module origin/$destiny
+    git format-patch --keep-subject --stdout origin/$destiny..origin/$origin -- $module | git am -3 --keep
+    pre-commit run -a
+    git add -A
+    git commit -m "[IMP] $module: pre-commit stuff"  --no-verify
+}
+
+function oca_mig_commit {
+    if [[ $# -ne 2 ]]; then
+        echo "You must provide an module name and destiny"
+        return 1
+    fi
+    module=$1
+    destiny=$2
+    echo "First commit on $module to $destiny"
+    git add --all
+    git commit -m "[16.0][MIG] $module"
+}
+
+
