@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 alias odoo16_venv="/opt/odoo16/odoo16-venv/bin/python3"
 alias odoo15_venv="/opt/odoo15/odoo15-venv/bin/python3"
 alias odoo14_venv="/opt/odoo14/odoo14-venv/bin/python3"
@@ -10,3 +12,48 @@ alias odoo15="odoo15_venv /opt/odoo15/odoo/odoo-bin"
 alias odoo14="odoo14_venv /opt/odoo14/odoo/odoo-bin"
 alias odoo13="odoo13_venv /opt/odoo13/odoo/odoo-bin"
 alias odoo12="odoo12_venv /opt/odoo12/odoo/odoo-bin"
+alias odoo11="odoo11_venv /opt/odoo11/odoo/odoo-bin"
+
+function odoo() {
+    # Identify and run odoo based on found config file
+    function find_odoo_config() {
+        # Search for config/odoo{number}.conf
+        current_dir=$(pwd)
+        for repeat in {1..5}
+        do
+            unset config_file
+            config_file=$(find $current_dir -maxdepth 4 -mindepth 1 -type f -name 'odoo[0-9][0-9].conf' | head -1)
+            if [ ! -z $config_file ]; then
+                echo $config_file
+                break
+            fi
+            current_dir="$current_dir/.."
+        done
+    }
+
+    function find_odoo_version() {
+        if [ -z $1 ]; then
+            return
+        fi
+        echo $config | grep -o -E '[0-9]+' | head -1
+    }
+    config=$(find_odoo_config)
+    if [ -z $config ]; then
+        echo "Error: No configuration file"
+        return
+    fi
+
+    count_files=$(echo $config | wc -l)
+    if [ "$count_files" -gt "1" ]; then
+        echo "Error: Multiple config files found on path"
+        return
+    fi
+
+    odoo_version=$(find_odoo_version $config)
+    if [ -z $odoo_version ]; then
+        echo "Error: Unable to detect odoo version from: $config"
+        return
+    fi
+
+    eval "odoo$odoo_version -c $config $@"
+}
