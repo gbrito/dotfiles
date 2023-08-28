@@ -21,13 +21,17 @@ function odoo() {
         current_dir=$(pwd)
         for repeat in {1..5}
         do
+            if [[ "$current_dir" != "$HOME"* ]]; then
+                break
+            fi
+
             unset config_file
-            config_file=$(find $current_dir -maxdepth 4 -mindepth 1 -type f -name 'odoo[0-9][0-9].conf' | head -1)
+            config_file=$(find $current_dir -maxdepth 2 -mindepth 1 -type f -name 'odoo[0-9][0-9].conf' | head -1)
             if [ ! -z $config_file ]; then
                 echo $config_file
                 break
             fi
-            current_dir="$current_dir/.."
+            current_dir="$(dirname "$current_dir")"
         done
     }
 
@@ -35,17 +39,11 @@ function odoo() {
         if [ -z $1 ]; then
             return
         fi
-        echo $config | grep -o -E '[0-9]+' | head -1
+        echo $config | grep -o -E '[0-9]+' | tail -1
     }
     config=$(find_odoo_config)
     if [ -z $config ]; then
         echo "Error: No configuration file"
-        return
-    fi
-
-    count_files=$(echo $config | wc -l)
-    if [ "$count_files" -gt "1" ]; then
-        echo "Error: Multiple config files found on path"
         return
     fi
 
@@ -54,6 +52,5 @@ function odoo() {
         echo "Error: Unable to detect odoo version from: $config"
         return
     fi
-
     eval "odoo$odoo_version -c $config $@"
 }
