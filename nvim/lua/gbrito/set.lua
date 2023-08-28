@@ -28,6 +28,11 @@ vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
 vim.opt.isfname:append("@-@")
 
-vim.opt.updatetime = 50
+-- Decrease update time
+vim.opt.updatetime = 250
+vim.opt.timeoutlen = 300
+
+vim.opt.completeopt = 'menuone,noselect'
 
 vim.opt.colorcolumn = "80"
+
