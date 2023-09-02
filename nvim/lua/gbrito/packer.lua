@@ -3,6 +3,7 @@ vim.cmd.packadd('packer.nvim')
 return require('packer').startup(function(use)
   use 'wbthomason/packer.nvim'
   use 'christoomey/vim-tmux-navigator'
+  use 'stevearc/dressing.nvim'
 
   use {
 	  'nvim-telescope/telescope.nvim', tag = '0.1.0',
