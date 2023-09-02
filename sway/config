@@ -41,7 +41,12 @@ exec swayidle -w \
     before-sleep 'swaylock -c ~/.config/swaylock/config'
 
 
+# Bluetooth applet
 exec blueman-applet
+
+# Notification Daemon
+exec swaync
+bindsym $mod+Shift+n exec swaync-client -t -sw
 
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
