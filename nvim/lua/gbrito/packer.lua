@@ -6,6 +6,13 @@ return require('packer').startup(function(use)
   use 'stevearc/dressing.nvim'
 
   use {
+	  'nvim-tree/nvim-tree.lua',
+	  requires = {
+            {'nvim-tree/nvim-web-devicons'},
+        }
+  }
+
+  use {
 	  'nvim-telescope/telescope.nvim', tag = '0.1.0',
 	  requires = {
             {'nvim-lua/plenary.nvim'},
