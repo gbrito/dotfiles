@@ -26,9 +26,6 @@ else
     export EDITOR='nvim'
 fi
 
-# Source files
-source $HOME/.config/erpopen/startup.sh
-#
 # Load seperated config files
 for conf in "$HOME/.dotfiles/zshconf/"*; do
   source "${conf}"
