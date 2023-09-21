@@ -61,7 +61,12 @@ function odoo() {
         echo "Error: Unable to detect odoo version from: $config"
         return
     fi
-    eval "odoo$odoo_version -c $config $@"
+
+    if [ $1 = "shell" ]; then
+        eval "odoo$odoo_version $1 -c $config"
+    else
+        eval "odoo$odoo_version -c $config $@"
+    fi
 }
 
 function venv_odoo() {
