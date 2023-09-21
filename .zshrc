@@ -18,6 +18,7 @@ source $ZSH/oh-my-zsh.sh
 # User configuration
 
 export LANG=en_US.UTF-8
+export _JAVA_AWT_WM_NONREPARENTING=1
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
@@ -27,6 +28,11 @@ else
 fi
 
 # Load seperated config files
+for conf in "$HOME/.dotfiles/work/"*; do
+  source "${conf}"
+done
+unset conf
+
 for conf in "$HOME/.dotfiles/zshconf/"*; do
   source "${conf}"
 done
