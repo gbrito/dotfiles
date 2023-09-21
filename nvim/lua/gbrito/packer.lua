@@ -21,14 +21,6 @@ return require('packer').startup(function(use)
   }
 
   use({
-    "jose-elias-alvarez/null-ls.nvim",
-    config = function()
-        require("null-ls").setup()
-    end,
-    requires = { "nvim-lua/plenary.nvim" },
-  })
-
-  use({
 	  'rose-pine/neovim',
 	  as = 'rose-pine',
 	  config = function()
@@ -66,27 +58,35 @@ return require('packer').startup(function(use)
           require('Comment').setup()
       end
   }
+
   use {
-	  'VonHeikemen/lsp-zero.nvim',
-	  branch = 'v1.x',
+      'williamboman/mason.nvim',
+      requires = {
+          "williamboman/mason-lspconfig.nvim",
+          "jayp0521/mason-null-ls.nvim",
+      }
+  }
+
+  use({
+    "jose-elias-alvarez/null-ls.nvim",
+    config = function()
+        require("null-ls").setup()
+    end,
+    requires = { "nvim-lua/plenary.nvim" },
+  })
+
+
+  use {
+	  "hrsh7th/nvim-cmp",
 	  requires = {
-		  -- LSP Support
-		  {'neovim/nvim-lspconfig'},
-		  {'williamboman/mason.nvim'},
-		  {'williamboman/mason-lspconfig.nvim'},
-          {'antosha417/nvim-lsp-file-operations', config = true},
-
-		  -- Autocompletion
-		  {'hrsh7th/nvim-cmp'},
-		  {'hrsh7th/cmp-buffer'},
-		  {'hrsh7th/cmp-path'},
-		  {'saadparwaiz1/cmp_luasnip'},
-		  {'hrsh7th/cmp-nvim-lsp'},
-		  {'hrsh7th/cmp-nvim-lua'},
-
-		  -- Snippets
-		  {'L3MON4D3/LuaSnip'},
-		  {'rafamadriz/friendly-snippets'},
+          "neovim/nvim-lspconfig",
+          "hrsh7th/cmp-nvim-lsp",
+          "hrsh7th/cmp-buffer",
+          "hrsh7th/cmp-path",
+          "antosha417/nvim-lsp-file-operations",
+          "L3MON4D3/LuaSnip",
+          "saadparwaiz1/cmp_luasnip",
+          "rafamadriz/friendly-snippets",
 	  }
   }
 
