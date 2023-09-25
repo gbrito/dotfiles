@@ -33,6 +33,8 @@ vim.keymap.set("v", "<C-s>", ":sort<CR>")
 vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 
+vim.keymap.set("n", "<leader>b", ":%!black - -q<CR>", { silent = true })
+
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 
 vim.keymap.set("n", "<leader><leader>", function()
