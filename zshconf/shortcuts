@@ -1,1 +1,2 @@
 alias rem_pyc="find . \( -name __pycache__ -o -name '*.pyc' \) -delete"
+alias redis="docker-compose up redis"
