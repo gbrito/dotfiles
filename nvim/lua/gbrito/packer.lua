@@ -48,7 +48,9 @@ return require('packer').startup(function(use)
     use("theprimeagen/harpoon")
     use("mbbill/undotree")
     use("tpope/vim-fugitive")
-    use("nvim-treesitter/nvim-treesitter-context");
+    use("nvim-treesitter/nvim-treesitter-context")
+    use("windwp/nvim-autopairs")
+    use("windwp/nvim-ts-autotag")
 
     use {
         'numToStr/Comment.nvim',
