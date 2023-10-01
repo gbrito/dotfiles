@@ -94,3 +94,6 @@ archive.zip
 # Personal
 personal/
 work/
+
+nvim/plugin
+
