@@ -28,10 +28,6 @@ input "type:pointer" accel_profile flat
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 output * bg /home/gbrito/Pictures/odin-dark.jpg fill
-output DP-1 transform 90
-output DP-2 transform 90
-output DP-3 transform 90
-output DP-4 transform 90
 
 ### Idle configuration
 exec swayidle -w \
