@@ -15,6 +15,7 @@ return require('packer').startup(function(use)
     use {
         'nvim-telescope/telescope.nvim', tag = '0.1.3',
         requires = {
+            { 'nvim-telescope/telescope-live-grep-args.nvim' },
             { 'nvim-lua/plenary.nvim' },
             { 'nvim-tree/nvim-web-devicons' },
         }
@@ -51,6 +52,13 @@ return require('packer').startup(function(use)
     use("nvim-treesitter/nvim-treesitter-context")
     use("windwp/nvim-autopairs")
     use("windwp/nvim-ts-autotag")
+
+    use {
+        'akinsho/bufferline.nvim',
+        requires = {
+            'nvim-tree/nvim-web-devicons'
+        },
+    }
 
     use {
         'numToStr/Comment.nvim',
