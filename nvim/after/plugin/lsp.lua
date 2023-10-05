@@ -31,6 +31,16 @@ lsp_zero.on_attach(function(client, bufnr)
     keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
 end)
 
+-- define our custom language server here
+lsp_zero.new_client({
+    name = 'odoo-lsp',
+    cmd = { 'odoo-lsp' },
+    filetypes = { 'javascript', 'xml', 'python' },
+    root_dir = function()
+        return lsp_zero.dir.find_first({ '.odoo_lsp', '.odoo_lsp.json' })
+    end,
+})
+
 require('mason').setup({})
 require('mason-lspconfig').setup({
     handlers = {
@@ -42,6 +52,7 @@ local cmp = require('cmp')
 local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
 cmp.setup({
+    formatting = lsp_zero.cmp_format(),
     completion = {
         completeopt = "menu,menuone,preview,noselect",
     },
