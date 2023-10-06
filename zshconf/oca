@@ -25,7 +25,7 @@ function oca_mig_commit {
     destiny=$2
     echo "First commit on $module to $destiny"
     git add --all
-    git commit -m "[16.0][MIG] $module"
+    git commit -m "[$destiny][MIG] $module"
 }
 
 
