@@ -13,6 +13,19 @@ return require('packer').startup(function(use)
     }
 
     use {
+        'folke/neodev.nvim',
+        requires = {
+            {
+                'mfussenegger/nvim-dap',
+                'mfussenegger/nvim-dap-python',
+                'rcarriga/nvim-dap-ui',
+                'theHamsta/nvim-dap-virtual-text',
+                'nvim-telescope/telescope-dap.nvim',
+            }
+        }
+    }
+
+    use {
         'nvim-telescope/telescope.nvim', tag = '0.1.3',
         requires = {
             { 'nvim-telescope/telescope-live-grep-args.nvim' },

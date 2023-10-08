@@ -1,0 +1,45 @@
+local neodev = require("neodev")
+local dap = require("dap")
+local dapui = require("dapui")
+local dapvirtualtext = require("nvim-dap-virtual-text")
+
+dap.set_log_level('DEBUG')
+
+dap.adapters.python = {
+    type = 'executable',
+    command = 'python',
+    args = { '-m', 'debugpy.adapter' },
+}
+
+neodev.setup({
+    library = {
+        plugins = {
+            "nvim-dap-ui",
+        },
+        types = true,
+    }
+})
+
+dapui.setup()
+dapvirtualtext.setup()
+
+dap.listeners.after.event_initialized["dapui_config"] = function()
+    dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+    dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+    dapui.close()
+end
+
+vim.keymap.set('n', '<Leader>b', function() dap.toggle_breakpoint() end)
+vim.keymap.set('n', '<Leader>B', function() dap.toggle_breakpoint() end)
+vim.keymap.set('n', '<F4>', function()
+    require('dap.ext.vscode').load_launchjs(".dap-config.json")
+    dap.continue()
+end)
+vim.keymap.set('n', '<F8>', function() dap.step_over() end)
+vim.keymap.set('n', '<F9>', function() dap.step_into() end)
+vim.keymap.set('n', '<F10>', function() dap.step_out() end)
+vim.keymap.set('n', '<F5>', function() dapui.toggle() end)
