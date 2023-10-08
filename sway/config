@@ -162,6 +162,12 @@ bindsym Print exec grim -g "$(slurp)" - | swappy -f -
     for_window [app_id="galculator"] floating enable
 
 #
+# Disable auto lock on full screen
+#
+
+    for_window [app_id=".*"] inhibit_idle fullscreen
+
+#
 # Resizing containers:
 #
 mode "resize" {
