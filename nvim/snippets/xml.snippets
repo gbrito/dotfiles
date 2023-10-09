@@ -1,0 +1,194 @@
+snippet start
+	<?xml version="1.0" encoding="UTF-8"?>
+	<odoo>
+
+	${1}
+
+	</odoo>
+
+snippet fd "<field ... />"
+	<field name="${1:Field}"/>
+
+snippet fdc "<field ... ></field>"
+	<field name="${1:Field}">${2:Value}</field>
+
+snippet fdr "<field ref='xxx'... />"
+	<field name="${1:Field}" ref="${2:ir_model_data}"/>
+
+snippet fde "<field eval='xxx'... />"
+	<field name="${1:Field}" eval="${2:Value}"/>
+
+snippet button
+	<button string="${1:Validate}" type="${4:object}" name="${5:to_validate}"/>
+
+snippet domain
+	domain="[('${1:state}','${2:=}', ${3:True})]"
+
+snippet context
+	context="{}"
+
+snippet attrsreq "required"
+	attrs="{'${1:required}': [('${2:state}','${3:=}', ${4:'value'})]}"
+
+snippet attrsread "readonly"
+	attrs="{'${1:readonly}': [('${2:state}','${3:=}', ${4:'value'})]}"
+
+snippet attrsinv "invisible"
+	attrs="{'${1:invisible}': [('${2:state}','${3:=}', ${4:'value'})]}"
+
+snippet sep
+	<separator"/>
+
+snippet group
+	<group>
+		${0}
+	</group>
+
+snippet notebook
+	<notebook>
+		<page string="${1:Label}">
+		    ${0}
+		</page>
+	</notebook>
+
+snippet page
+	<page string="${1:Label}">
+		$0
+	</page>
+
+snippet label
+	<label string="${1:Label}"/>
+
+snippet attr
+	<attribute name="${1:name}">${2:value}</attribute>
+
+snippet record
+	<record id="${1:ir_model_data}" model="${2:Model}">
+		$0
+	</record>
+
+snippet ref
+	ref="${1:ir_model_data}"
+
+snippet eval
+	eval="${1:Value}"
+
+snippet nol
+	nolabel="1" ${1}
+
+snippet readonly
+	readonly="1" ${1}
+
+snippet required
+	required="1" ${1}
+
+snippet invisible
+	invisible="1" ${1}
+
+snippet pos
+	position="${1:inside}"
+
+snippet position
+	position="${1:inside}"
+
+snippet mode
+	mode="tree,form"
+
+snippet colspan
+	colspan="4"
+
+snippet col
+	col="4"
+
+snippet colors
+	colors="${1:grey}:${2:state}${3:==}'${4:draft}'${5:;}"
+
+snippet editable "bottom"
+	editable="bottom"
+
+snippet focus
+	default_focus="1"
+
+snippet noupdate
+	noupdate="1"
+
+snippet confirm
+	confirm="Are you sure ?"
+
+snippet tree
+	<tree string="${1:Label}">
+		${0}
+	</tree>
+
+snippet form
+	<form>
+		${0}
+	</form>
+
+snippet menuact "Action"
+	<menuitem id="menu_${1:model_name}"
+		parent="menu_${2:menu_parent}"
+		sequence="${3:20}"
+		action="action_${4:Action}"/>
+
+snippet menuname "Name"
+	<menuitem id="menu_${1:model_name}"
+		parent="menu_${2:menu_parent}"
+		sequence="${3:20}"
+		name="${4:Label}"/>
+
+snippet menuitem "Server Action"
+	<record id="ir_action_server_$1" model="ir.actions.server">
+		<field name="name">${1:Name of the action}</field>
+		<field name="model_id" ref="model_${2:model_name}"/>
+		<field name="binding_model_id" ref="${3:model_for_action}"/>
+		<field name="state">code</field>
+		<field name="code">
+		    ${3:code}
+		</field>
+	</record>
+
+snippet xpaf "xpath after"
+	<xpath expr="//field[@${1:name}='${2:field}']" position="after">
+		<field name="${3:name}"/>
+	</xpath>
+
+snippet xpb "xpath before"
+	<xpath expr="//field[@${1:name}='${2:field}']" position="before">
+		<field name="${3:name}"/>
+	</xpath>
+
+snippet xpr "xpath replace"
+	<xpath expr="//field[@${1:name}='${2:field}']" position="replace">
+		<field name="$2"/>
+	</xpath>
+
+snippet xpi "xpath inside"
+	<xpath expr="//notebook" position="inside">
+		<page string="${1:text}">
+			<field name="${2:name}"/>
+		</page>
+	</xpath>
+
+snippet xpat "xpath attribute"
+	<xpath expr="//field[@${1:name}='${2:field}']" position="attributes">
+		<attribute name="${3:required}">${4:1}</attribute>
+	</xpath>
+
+snippet wgs "widget selection"
+	widget="selection"
+
+snippet wgf "widget float_time"
+	widget="float_time"
+
+snippet wgu "widget url"
+	widget="url"
+
+snippet wgp "widget progressbar"
+	widget="progressbar"
+
+snippet wgm "widget many2many_tag"
+	widget="many2many"
+
+snippet wgps "widget password"
+	password="1"
