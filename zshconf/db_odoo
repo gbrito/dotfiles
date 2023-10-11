@@ -1,109 +1,107 @@
 #!/usr/bin/env bash
 
 function db_odoo_reset() {
-# arg$1 - Database name
-if [[ $# -eq 0 ]] ; then
-    echo 'No db name given. exiting'
-    return 1
-fi
+    # arg$1 - Database name
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
     echo "Deactivating Crons"
     # Deactivate crons
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "update ir_cron set active = false;"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_cron set active = false;"
     # Delete mail servers
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "delete from fetchmail_server;"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "delete from ir_mail_server;"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from fetchmail_server;"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_mail_server;"
 
-    db_odoo_fix_code $1
-    db_odoo_admin $1
-    db_odoo_remove_report_url $1
+    db_odoo_fix_code "$1"
+    db_odoo_admin "$1"
+    db_odoo_remove_report_url "$1"
     echo "Database $1 ready for test"
 }
 
 function db_odoo_fix_code() {
-# arg$1 - Database name
-if [[ $# -eq 0 ]] ; then
-    echo 'No db name given. exiting'
-    return 1
-fi
+    # arg$1 - Database name
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
     export PGPASSWORD=odoo
     db_name=$1
     uuid=$(uuidgen)
     today_date="$(date -d '+1 year' +'%Y-%m-%d %H:%M:%S')"
 
     echo "Delete enterprise code"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "delete from ir_config_parameter where key like '%enterprise_code%';"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "update ir_config_parameter set value = '${uuid}' where key like '%uuid%';"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_config_parameter where key like '%enterprise_code%';"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_config_parameter set value = '${uuid}' where key like '%uuid%';"
     echo "Update database create date"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "update ir_config_parameter set value = '${today_date}' where key = 'database.expiration_date';"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_config_parameter set value = '${today_date}' where key = 'database.expiration_date';"
 }
 
 function db_odoo_remove_report_url() {
-# arg$1 - Database name
-if [[ $# -eq 0 ]] ; then
-    echo 'No db name given. exiting'
-    return 1
-fi
+    # arg$1 - Database name
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
     echo "Deleting report.url key"
     export PGPASSWORD=odoo
     db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "delete from ir_config_parameter where key = 'report.url';"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_config_parameter where key = 'report.url';"
 }
 
 function db_odoo_admin() {
-# arg$1 - Database name
-if [[ $# -eq 0 ]] ; then
-    echo 'No db name given. exiting'
-    return 1
-fi
+    # arg$1 - Database name
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
     echo "Changing admin password"
     export PGPASSWORD=odoo
     db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d ${db_name} -c "update res_users set password = 'admin' where login like 'admin';"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin' where login like 'admin';"
 }
 
 function db_restore() {
-# arg$1 - Database name to restore into
-# arg$2 - Dump of the database .sql
-# arg$3 - 1 if you dont want to clean the database
-if [[ $# -eq 0 ]] ; then
-    echo 'No db name given. exiting'
-    return 1
-fi
+    # arg$1 - Database name to restore into
+    # arg$2 - Dump of the database .sql
+    # arg$3 - 1 if you dont want to clean the database
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
     export PGPASSWORD=odoo
     db_name=$1
     restore_file=$2
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists ${db_name}
-    createdb -h 127.0.0.1 -p 5432 -U odoo -w ${db_name}
+    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
+    createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
     # Load sql dump
-    psql -h 127.0.0.1 -p 5432 -U odoo -w ${db_name} < ${restore_file}
+    psql -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}" < "${restore_file}"
     if [[ $3 != '1' ]]; then
-        db_odoo_reset $1
+        db_odoo_reset "$1"
     fi
-    echo Restored db $1
+    echo Restored db "$1"
 }
 
 function db_backup {
-# arg$1 - Database name to backup
-# arg$2 - boolean with default false. If true is passed,
-#         database will be compressed to be send to odoo for upgrading
-  if [[ $# -eq 0 ]]; then
-    echo No database name entered, exiting
-    return 1
-  fi
-  export PGPASSWORD=odoo
-  database=$1
-# set upgrade to default to false
-  upgrade="$2:-default false"
-  now="$(date +'%Y_%m_%d_%H_%M_%S')"
-  echo Going to backup $1 database, please wait
-  if [[ $2 = true ]]; then
-    output_file="$1_bak_$now.gz"
-    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v $1 | gzip -9 > $output_file
-  else
-     output_file="$1_bak_$now.sql"
-     pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v $1 > $output_file
-  fi
-echo Backup for database can be found @ $output_file
+    # arg$1 - Database name to backup
+    # arg$2 - boolean with default false. If true is passed,
+    #         database will be compressed to be send to odoo for upgrading
+    if [[ $# -eq 0 ]]; then
+        echo No database name entered, exiting
+        return 1
+    fi
+    export PGPASSWORD=odoo
+    database=$1
+    now="$(date +'%Y_%m_%d_%H_%M_%S')"
+    echo Going to backup "$1" database, please wait
+    if [[ $2 = true ]]; then
+        output_file="$1_bak_$now.gz"
+        pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v "$1" | gzip -9 > "$output_file"
+    else
+        output_file="$1_bak_$now.sql"
+        pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v "$1" > "$output_file"
+    fi
+    echo Backup for database can be found @ "$output_file"
 }
 
 function db_dump {
@@ -113,7 +111,7 @@ function db_dump {
     fi
     database="$1"
     export PGPASSWORD=odoo
-    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -F c -f ${database}.dump ${database}
+    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -F c -f "${database}".dump "${database}"
     echo "Database dump of $database "
 }
 
@@ -126,18 +124,16 @@ function db_dump_restore {
     db_name=$1
     restore_file=$2
     echo "Create an empty database ${db_name}"
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists ${db_name}
-    createdb -h 127.0.0.1 -p 5432 -U odoo -w ${db_name}
+    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
+    createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
     # Load dump
     echo "Start restoring ${restore_file} in ${db_name}"
-    pg_restore -h 127.0.0.1 -p 5432 -U odoo -w --no-owner --no-acl -d ${db_name} < ${restore_file}
+    pg_restore -h 127.0.0.1 -p 5432 -U odoo -w --no-owner --no-acl -d "${db_name}" < "${restore_file}"
     if [[ $3 != '1' ]]; then
-        db_odoo_reset $1
+        db_odoo_reset "$1"
     fi
     echo "Restored database ${db_name}"
 }
-
-
 
 function db_drop {
     if [[ $# -eq 0 ]]; then
@@ -148,7 +144,7 @@ function db_drop {
     export PGPASSWORD=postgres
     psql -h 127.0.0.1 -p 5432 -U postgres -w -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity where datname = '$database' and pid <> pg_backend_pid();"
     export PGPASSWORD=odoo
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists ${database}
+    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${database}"
     echo "Dropped database $database "
 }
 
@@ -160,11 +156,10 @@ function db_con {
 
     export PGPASSWORD=odoo
     database="$1"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w $database
+    psql -h 127.0.0.1 -p 5432 -U odoo -w "$database"
 }
 
 function db_list {
     export PGPASSWORD=odoo
     psql -h 127.0.0.1 -p 5432 -U odoo -w --list
 }
-

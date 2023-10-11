@@ -9,8 +9,8 @@ function oca_mig_module {
     origin=$2
     destiny=$3
     echo "Pulling module $module from $origin to $destiny"
-    git checkout -b $destiny-mig-$module origin/$destiny
-    git format-patch --keep-subject --stdout origin/$destiny..origin/$origin -- $module | git am -3 --keep
+    git checkout -b "$destiny"-mig-"$module" origin/"$destiny"
+    git format-patch --keep-subject --stdout origin/"$destiny"..origin/"$origin" -- "$module" | git am -3 --keep
     pre-commit run -a
     git add -A
     git commit -m "[IMP] $module: pre-commit stuff"  --no-verify
@@ -27,5 +27,3 @@ function oca_mig_commit {
     git add --all
     git commit -m "[$destiny][MIG] $module"
 }
-
-
