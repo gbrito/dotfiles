@@ -50,6 +50,7 @@ require('mason-lspconfig').setup({
 
 local cmp = require('cmp')
 local cmp_select = { behavior = cmp.SelectBehavior.Select }
+local luasnip = require('luasnip')
 
 cmp.setup({
     formatting = lsp_zero.cmp_format(),
@@ -64,8 +65,20 @@ cmp.setup({
         ['<C-e>'] = cmp.mapping.abort(), -- close completion window
         ['<CR>'] = cmp.mapping.confirm({ select = false }),
         ['<C-Space>'] = cmp.mapping.complete(),
-        ['<Tab>'] = nil,
-        ['<S-Tab>'] = nil,
+        ['<Tab>'] = cmp.mapping(function(fallback)
+            if luasnip.expand_or_jumpable() then
+                luasnip.expand_or_jump()
+            else
+                fallback()
+            end
+        end),
+        ['<S-Tab>'] = cmp.mapping(function(fallback)
+            if luasnip.jumpable(-1) then
+                luasnip.jump(-1)
+            else
+                fallback()
+            end
+        end),
     }),
     -- sources for autocompletion
     sources = cmp.config.sources({
