@@ -1,24 +1,9 @@
-local neodev = require("neodev")
 local dap = require("dap")
 local dapui = require("dapui")
 local dapvirtualtext = require("nvim-dap-virtual-text")
+require('dap-python').setup('~/.virtualenvs/debugpy/bin/python')
 
 dap.set_log_level('DEBUG')
-
-dap.adapters.python = {
-    type = 'executable',
-    command = 'python',
-    args = { '-m', 'debugpy.adapter' },
-}
-
-neodev.setup({
-    library = {
-        plugins = {
-            "nvim-dap-ui",
-        },
-        types = true,
-    }
-})
 
 dapui.setup()
 dapvirtualtext.setup()
