@@ -17,8 +17,8 @@ set $menu wofi --show
 set $laptop_monitor eDP-1
 
 # gaps between windows
-gaps inner 20px
-gaps outer 10px
+gaps inner 4px
+gaps outer 4px
 
 # Disable mouse accelaration
 
