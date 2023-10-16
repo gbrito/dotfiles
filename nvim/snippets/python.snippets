@@ -205,6 +205,16 @@ snippet _ "_sql_constraints"
 		("${1:Field name}_uniq", "unique ($1)", "The $1 must be unique!"),
 	]
 
+snippet api "api model"
+    @api.model
+	$0
+
+snippet api "api constrains"
+	@api.constrains(${1:field name})
+	def _check_${2:method_name}(self):
+	    for record in self:
+			$0
+
 snippet . "search"
 	.search(${1:domain}, limit=${3:None}, order=${4:None})
 
