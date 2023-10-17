@@ -6,6 +6,17 @@ telescope.load_extension("live_grep_args")
 
 telescope.setup({
     defaults = {
+        vimgrep_arguments = {
+            "rg",
+            "-L",
+            "--color=never",
+            "--no-heading",
+            "--with-filename",
+            "--line-number",
+            "--column",
+            "--hidden",
+            "--smart-case"
+        },
         file_ignore_patterns = {
             "%.dump",
             "%.sql",
@@ -24,7 +35,8 @@ telescope.setup({
 
 local keymap = vim.keymap
 
-keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Fuzzy find files in project" })
+keymap.set("n", "<leader>ff", ":lua require('telescope.builtin').find_files({ follow = true, hidden = true })<CR>",
+    { desc = "Fuzzy find files in project" })
 keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Fuzzy find recent files" })
 keymap.set("n", "<leader>fs", ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>",
     { desc = "Fuzzy string in project" })
