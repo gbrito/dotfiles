@@ -118,7 +118,16 @@ null_ls.setup({
 
 local prettier = require("prettier")
 prettier.setup({
-    bin = 'prettier', -- or `'prettierd'` (v0.22+)
+    bin = 'prettier',
+    cli_options = {
+        bracket_spacing = false,
+        use_tabs = false,
+        print_width = 88,
+        prose_wrap = "always",
+        semi = true,
+        trailing_comma = "es5",
+        html_whitespace_sensitivity = "strict",
+    },
     filetypes = {
         "css",
         "graphql",
@@ -131,6 +140,7 @@ prettier.setup({
         "scss",
         "typescript",
         "typescriptreact",
+        "xml",
         "yaml",
     },
 })
