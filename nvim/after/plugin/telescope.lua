@@ -22,6 +22,8 @@ telescope.setup({
             "%.sql",
             "%.xlsx",
             "%.zip",
+            "^node_modules/",
+            "%.git/",
         },
         mappings = {
             i = {
