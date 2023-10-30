@@ -25,7 +25,7 @@ gaps outer 4px
 input "type:pointer" accel_profile flat
 
 ### Output configuration
-#
+
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 output * bg /home/gbrito/Pictures/odin-dark.jpg fill
 

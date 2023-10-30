@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+function check_filestore() {
+    echo "Im checking"
+}
+
 function db_odoo_reset() {
     # arg$1 - Database name
     if [[ $# -eq 0 ]] ; then
