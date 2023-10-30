@@ -24,6 +24,8 @@ telescope.setup({
             "%.zip",
             "^node_modules/",
             "%.git/",
+            "__pycache__/",
+            "%.idea/"
         },
         mappings = {
             i = {
