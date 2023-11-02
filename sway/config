@@ -31,10 +31,10 @@ output * bg /home/gbrito/Pictures/odin-dark.jpg fill
 
 ### Idle configuration
 exec swayidle -w \
-    timeout 300 'swaylock -f -c ~/.config/swaylock/config'\
-    timeout 600 'swaymsg "output * dpms off"' \
+    timeout 300 'swaylock --screenshots --effect-blur 7x5 -f'\
+    timeout 400 'swaymsg "output * dpms off"' \
     resume 'swaymsg "output * dpms on"' \
-    before-sleep 'swaylock -c ~/.config/swaylock/config'
+    before-sleep 'swaylock --screenshots --effect-blur 7x5 -f'
 
 
 # Bluetooth applet
@@ -82,7 +82,7 @@ bindsym Print exec grim -g "$(slurp)" - | swappy -f -
     # Reload the configuration file
     bindsym $mod+Shift+c reload
 
-    bindsym $mod+Alt+l exec swaylock -C ~/.config/swaylock/config
+    bindsym $mod+Alt+l exec swaylock --screenshots --effect-blur 7x5 -f
 
 #
 # Moving around:
@@ -192,7 +192,7 @@ set $screenoff  swayidle -w  \
                 resume 'swaymsg "output * dpms on"; pkill -nx swayidle'
 
 mode "$mode_system" {
-    bindsym l exec -C ~/.config/swaylock/config, mode "default"
+    bindsym l exec swaylock --screenshots --effect-blur 7x5 -f, mode "default"
     bindsym e exit
     bindsym o exec --no-startup-id $screenoff, mode "default"
     bindsym s exec --no-startup-id systemctl suspend, mode "default"
