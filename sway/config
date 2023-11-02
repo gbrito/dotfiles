@@ -210,9 +210,13 @@ bar {
 	swaybar_command waybar
 }
 
+# Get monitor names: swaymsg -t get_outputs
+output "LG Electronics LG HDR 4K 0x00009FE9" resolution 3840x2160 position 0,0 transform 90
+output "LG Electronics LG HDR 4K 0x00002DF6" resolution 3840x2160 position 2160,960
+output $laptop_monitor resolution 1920x1080 position 3000,4270
+
 bindswitch --reload --locked lid:on output $laptop_monitor disable
 bindswitch --reload --locked lid:off output $laptop_monitor enable
-exec_always /home/gbrito/.config/sway/scripts/laptop_lid_handle.sh
 
 
 include /etc/sway/config.d/*
