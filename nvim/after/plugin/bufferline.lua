@@ -1,8 +1,19 @@
 local bufferline = require("bufferline")
 
-bufferline.setup()
+bufferline.setup({
+    options = {
+        mode = 'buffers',
+        offsets = {
+            {
+                filetype = "NvimTree",
+                text = "File Explorer",
+                highlight = "Directory",
+                separator = true,
+            }
+        },
+    },
+})
 
-vim.keymap.set("n", "<leader>tc", ":BufferLineCloseOthers<CR>")
-vim.keymap.set("n", "<C-n>", ":BufferLineCyclePrev<CR>")
-vim.keymap.set("n", "<C-m>", ":BufferLineCycleNext<CR>")
-vim.keymap.set("n", "<C-b>", ":BufferLinePickClose<CR>")
+vim.keymap.set("n", "<leader>bc", ":BufferLineCloseOthers<CR>")
+vim.keymap.set("n", "<leader>bl", ":BufferLinePick<CR>")
+vim.keymap.set("n", "<leader>bb", ":BufferLinePickClose<CR>")
