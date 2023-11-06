@@ -24,6 +24,14 @@ gaps outer 4px
 
 input "type:pointer" accel_profile flat
 
+# Enable touchpad
+
+input "SYNA30B4:00 06CB:CE09" {
+    dwt enabled
+    tap enabled
+    middle_emulation enabled
+}
+
 ### Output configuration
 
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
