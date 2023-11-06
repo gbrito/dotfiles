@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+alias odoo17_venv="source /opt/odoo17/odoo17-venv/bin/activate"
 alias odoo16_venv="source /opt/odoo16/odoo16-venv/bin/activate"
 alias odoo15_venv="source /opt/odoo15/odoo15-venv/bin/activate"
 alias odoo14_venv="source /opt/odoo14/odoo14-venv/bin/activate"
@@ -7,6 +8,7 @@ alias odoo13_venv="source /opt/odoo13/odoo13-venv/bin/activate"
 alias odoo12_venv="source /opt/odoo12/odoo12-venv/bin/activate"
 alias odoo11_venv="source /opt/odoo11/odoo11-venv/bin/activate"
 
+alias odoo17_python="/opt/odoo17/odoo17-venv/bin/python3"
 alias odoo16_python="/opt/odoo16/odoo16-venv/bin/python3"
 alias odoo15_python="/opt/odoo15/odoo15-venv/bin/python3"
 alias odoo14_python="/opt/odoo14/odoo14-venv/bin/python3"
@@ -14,6 +16,7 @@ alias odoo13_python="/opt/odoo13/odoo13-venv/bin/python3"
 alias odoo12_python="/opt/odoo12/odoo12-venv/bin/python3"
 alias odoo11_python="/opt/odoo11/odoo11-venv/bin/python3"
 
+alias odoo17="odoo17_python /opt/odoo17/odoo/odoo-bin"
 alias odoo16="odoo16_python /opt/odoo16/odoo/odoo-bin"
 alias odoo15="odoo15_python /opt/odoo15/odoo/odoo-bin"
 alias odoo14="odoo14_python /opt/odoo14/odoo/odoo-bin"
