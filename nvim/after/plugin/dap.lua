@@ -18,8 +18,7 @@ dap.listeners.before.event_exited["dapui_config"] = function()
     dapui.close()
 end
 
-vim.keymap.set('n', '<Leader>b', function() dap.toggle_breakpoint() end)
-vim.keymap.set('n', '<Leader>B', function() dap.toggle_breakpoint() end)
+vim.keymap.set('n', '<C-b>', function() dap.toggle_breakpoint() end)
 vim.keymap.set('n', '<F4>', function()
     require('dap.ext.vscode').load_launchjs(".dap-config.json")
     dap.continue()
