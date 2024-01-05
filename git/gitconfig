@@ -1,0 +1,7 @@
+[user]
+	email = gbrito@gdsbb.org
+	name = Goncalo Brito
+[init]
+	defaultBranch = main
+[core]
+	excludesfile = /home/gbrito/.gitignore_global
