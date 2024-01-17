@@ -44,5 +44,6 @@ keymap.set("n", "<leader>ff", ":lua require('telescope.builtin').find_files({ fo
 keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Fuzzy find recent files" })
 keymap.set("n", "<leader>fs", ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>",
     { desc = "Fuzzy string in project" })
+keymap.set('n', '<C-p>', builtin.git_files, {})
 keymap.set("n", "<leader>fc", builtin.grep_string, { desc = "Fuzzy string under cursor in project" })
 keymap.set("n", "<leader>vh", builtin.help_tags, {})
