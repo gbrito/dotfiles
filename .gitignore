@@ -96,4 +96,4 @@ personal/
 work/
 
 nvim/plugin/
-
+nvim/lazy-lock.json
