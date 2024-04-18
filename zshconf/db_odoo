@@ -114,9 +114,14 @@ function db_dump {
         return 1
     fi
     database="$1"
+    if [[ $# -eq 2 ]]; then
+        output_file="$2.dump"
+    else
+        output_file="$1.dump"
+    fi
     export PGPASSWORD=odoo
-    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -F c -f "${database}".dump "${database}"
-    echo "Database dump of $database "
+    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -F c -f "${output_file}" "${database}"
+    echo "Database dump of $database to $output_file done."
 }
 
 function db_dump_restore {
