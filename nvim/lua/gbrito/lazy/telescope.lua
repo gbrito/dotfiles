@@ -1,7 +1,7 @@
 return {
     "nvim-telescope/telescope.nvim",
 
-    tag = "0.1.5",
+    tag = "0.1.6",
 
     dependencies = {
         "nvim-lua/plenary.nvim",
@@ -43,7 +43,7 @@ return {
                     i = {
                         ["<C-k>"] = actions.move_selection_previous,
                         ["<C-j>"] = actions.move_selection_next,
-                        ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
+                        ["<C-q>"] = actions.send_to_qflist + actions.open_qflist,
                     }
                 }
             }
