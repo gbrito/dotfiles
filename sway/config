@@ -72,7 +72,7 @@ bindsym Print exec grim -g "$(slurp)" - | swappy -f -
 #
     # Start a terminal
     bindsym $mod+Return exec $term
-    bindsym $mod+b exec brave
+    bindsym $mod+b exec brave -enable-features=UseOzonePlatform -ozone-platform=wayland
 
     # Kill focused window
     bindsym $mod+Shift+q kill
