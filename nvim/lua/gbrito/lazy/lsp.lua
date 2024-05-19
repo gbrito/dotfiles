@@ -1,5 +1,5 @@
 return {
-        "VonHeikemen/lsp-zero.nvim",
+    "VonHeikemen/lsp-zero.nvim",
     dependencies = {
         "neovim/nvim-lspconfig",
         "williamboman/mason.nvim",
@@ -11,7 +11,6 @@ return {
         "hrsh7th/cmp-path",
         "saadparwaiz1/cmp_luasnip",
         "hrsh7th/cmp-cmdline",
-        "L3MON4D3/LuaSnip",
         "rafamadriz/friendly-snippets",
         "j-hui/fidget.nvim",
         "jose-elias-alvarez/null-ls.nvim",
@@ -67,6 +66,14 @@ return {
                 expand = function(args)
                     require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
                 end,
+            },
+        })
+
+        -- Setup up vim-dadbod
+        cmp.setup.filetype({ "sql" }, {
+            sources = {
+                { name = "vim-dadbod-completion" },
+                { name = "buffer" },
             },
         })
 
