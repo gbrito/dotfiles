@@ -77,14 +77,28 @@ function venv_odoo() {
     config=$(find_odoo_config)
     if [ -z "$config" ]; then
         echo "Error: No configuration file"
-        return
+        return 0
     fi
 
     odoo_version=$(find_odoo_version "$config")
     if [ -z "$odoo_version" ]; then
         echo "Error: Unable to detect odoo version from: $config"
-        return
+        return 0
+    fi
+
+    if [ "$VIRTUAL_ENV" ]; then
+        deactivate
     fi
 
     eval "odoo${odoo_version}_venv"
+    return 1
+}
+
+function code() {
+    result=$(venv_odoo)
+    if [[ "$result" =~ "Error.*" ]]; then
+        echo "$result"
+        return
+    fi
+    vim .
 }
