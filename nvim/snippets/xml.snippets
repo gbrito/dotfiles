@@ -7,7 +7,10 @@ snippet start
 			<field name="model">my.model</field>
 			<field name="arch" type="xml">
 				<form>
+	                <header>
+                	</header>
 					<sheet>
+                        <div name="button_box" class="oe_button_box" />
 						<group>
 							$1
 						</group>
@@ -32,6 +35,14 @@ snippet start
 			<field name="arch" type="xml">
 				<search>
 					$3
+                <separator />
+                <filter string="Info" name="filter_type" domain="[('type','=','info')]" />
+                <separator />
+                <group expand="0" string="Group By" name="group_by">
+                    <filter string="Type" name="groupby_type" domain="[]"
+                        context="{'group_by': 'type'}" />
+                </group>
+
 				</search>
 			</field>
 		</record>
@@ -43,6 +54,15 @@ snippet start
 		</record>
 
 	</odoo>
+
+snippet recordinherit
+    <record id="${1:my_model}" model="ir.ui.view">
+        <field name="model">${2:my.model}</field>
+        <field name="inherit_id" ref="${3:module}.${1:my_model}"/>
+        <field name="arch" type="xml">
+			$4
+        </field>
+    </record>
 
 snippet fd "<field ... />"
 	<field name="${1:Field}"/>
