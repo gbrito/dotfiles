@@ -94,15 +94,6 @@ function venv_odoo() {
     return 1
 }
 
-function code() {
-    result=$(venv_odoo)
-    if [[ "$result" =~ "Error.*" ]]; then
-        echo "$result"
-        return
-    fi
-    venv_odoo && exec vim .
-}
-
 function install_odoo_modules() {
     # Install all modules in the current directory
     config=$(find_odoo_config)
