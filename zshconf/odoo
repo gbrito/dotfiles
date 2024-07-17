@@ -100,5 +100,17 @@ function code() {
         echo "$result"
         return
     fi
-    vim .
+    venv_odoo && exec vim .
 }
+
+function install_odoo_modules() {
+    # Install all modules in the current directory
+    config=$(find_odoo_config)
+    if [ -z "$config" ]; then
+        echo "Error: No configuration file"
+        return
+    fi
+
+    for module in $(ls -d *); odoo -i "$module" --stop-after-init;
+}
+
