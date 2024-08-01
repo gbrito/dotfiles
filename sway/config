@@ -12,7 +12,7 @@ set $term foot
 # Your preferred application launcher
 # Note: pass the final command to swaymsg so that the resulting window can be opened
 # on the original workspace that the command was run on.
-set $menu wofi --show
+set $menu rofi -show drun
 # Laptop monitor
 set $laptop_monitor eDP-1
 
@@ -61,7 +61,7 @@ bindsym XF86MonBrightnessUp exec brightnessctl set 5%+
 bindsym XF86AudioPlay exec playerctl play-pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
-bindsym XF86Search exec bemenu-run
+bindsym XF86Search exec $menu
 
 # Print
 bindsym Print exec grim -g "$(slurp)" - | swappy -f -
