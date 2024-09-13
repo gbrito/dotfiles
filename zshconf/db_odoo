@@ -66,6 +66,27 @@ function db_odoo_disable_users_totp() {
     psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set totp_secret = null;"
 }
 
+function db_odoo_disable_customziation() {
+    # arg$1 - Database name
+    # arg$2 - user_id
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
+
+    user_id=2
+    if [[ $# -eq 2 ]] ; then
+        user_id=$2
+    fi
+
+    echo "Disable studio and extra customization"
+    export PGPASSWORD=odoo
+    db_name=$1
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_ui_view where create_uid = ${user_id};"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_model_fields where create_uid = ${user_id};"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_model where create_uid = ${user_id};"
+}
+
 function db_odoo_admin() {
     # arg$1 - Database name
     if [[ $# -eq 0 ]] ; then
