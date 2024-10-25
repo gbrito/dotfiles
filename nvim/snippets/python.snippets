@@ -38,6 +38,17 @@ snippet erpopen "Copyright header erpopen"
     # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html).
     ${0}
 
+snippet datetotz "Convert date to user timezone"
+    pytz.timezone(self.env.context.get("tz") or self.env.user.tz)
+	.localize(${1:record_field})
+	.replace(
+		hour=23,
+		minute=59,
+		second=59,
+	)
+	.astimezone(pytz.utc)
+	.replace(tzinfo=None)
+
 snippet module "Odoo Manifest"
 	{
 		"name": "${1:Module name}",
