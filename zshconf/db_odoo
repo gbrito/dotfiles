@@ -89,14 +89,20 @@ function db_odoo_disable_customziation() {
 
 function db_odoo_admin() {
     # arg$1 - Database name
+    # arg$2 - Login to reset password
     if [[ $# -eq 0 ]] ; then
         echo 'No db name given. exiting'
         return 1
     fi
-    echo "Changing admin password"
     export PGPASSWORD=odoo
     db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin' where login like 'admin';"
+    db_login="admin"
+    if [[ $# -eq 2 ]] ; then
+        db_login=$2
+    fi
+    echo "Changing admin password for user {$db_login}"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin' where login = '${db_login}';"
+
 }
 
 function db_restore() {
