@@ -10,5 +10,6 @@ return {
         })
         vim.keymap.set("n", "<leader>b", ":Gitsigns blame_line<CR>")
         vim.keymap.set("n", "<leader>gd", ":Gitsigns diffthis<CR>")
+        vim.keymap.set("n", "<leader>gn", ":Gitsigns nav_hunk 'next'<CR>")
     end
 }
