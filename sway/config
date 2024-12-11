@@ -215,7 +215,7 @@ bar {
 }
 
 # Get monitor names: swaymsg -t get_outputs
-output $laptop_monitor resolution 1920x1080 position 3000,4270
+output $laptop_monitor resolution 1920x1080
 
 bindswitch --reload --locked lid:on output $laptop_monitor disable
 bindswitch --reload --locked lid:off output $laptop_monitor enable
