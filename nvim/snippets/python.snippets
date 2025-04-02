@@ -33,8 +33,7 @@ snippet callista "Copyright header callista"
     ${0}
 
 snippet erpopen "Copyright header erpopen"
-    # -*- coding: utf-8 -*-
-    # Copyright (c) `strftime("%Y")` ERP|OPEN <https://www.erpopen.nl>
+    # Copyright (c) ERP|OPEN <https://www.erpopen.nl>
     # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html).
     ${0}
 
@@ -53,7 +52,7 @@ snippet module "Odoo Manifest"
 	{
 		"name": "${1:Module name}",
 		"summary": "${2:Module summary}",
-		"version": "${3:16.0}.1.0.0",
+		"version": "${3:18.0}.1.0.0",
 		"website": "${4:https://www.erpopen.nl}",
 		"author": "${5:ERP|OPEN}",
 		"license": "LGPL-3",
@@ -297,7 +296,7 @@ snippet log "Error"
 	logger.error("${1}")
 
 snippet super
-	super(${1:ClassName}, self).${2:methodName}(cr, uid, ${3:ids}, ${4}context=context)${5}
+	super(${1:ClassName}, self).${2:methodName}(${3:vars})${4}
 
 snippet def
 	def ${1:fname}(${2:`indent(".") ? "self" : ""`}):
