@@ -8,8 +8,9 @@ alias odoo14_venv="source /opt/odoo14/odoo14-venv/bin/activate"
 alias odoo13_venv="source /opt/odoo13/odoo13-venv/bin/activate"
 alias odoo12_venv="source /opt/odoo12/odoo12-venv/bin/activate"
 alias odoo11_venv="source /opt/odoo11/odoo11-venv/bin/activate"
+alias odoo10_venv="source /opt/odoo10/odoo10-venv/bin/activate"
 
-alias odoo18_python="/opt/odoo18/odoo18-venv/bin/python3"
+alias odoo18_python="uv run /opt/odoo18/odoo18-venv/bin/python3 -s"
 alias odoo17_python="/opt/odoo17/odoo17-venv/bin/python3"
 alias odoo16_python="/opt/odoo16/odoo16-venv/bin/python3"
 alias odoo15_python="/opt/odoo15/odoo15-venv/bin/python3"
@@ -17,6 +18,7 @@ alias odoo14_python="/opt/odoo14/odoo14-venv/bin/python3"
 alias odoo13_python="/opt/odoo13/odoo13-venv/bin/python3"
 alias odoo12_python="/opt/odoo12/odoo12-venv/bin/python3"
 alias odoo11_python="/opt/odoo11/odoo11-venv/bin/python3"
+alias odoo10_python="/opt/odoo10/odoo10-venv/bin/python"
 
 alias odoo18="odoo18_python /opt/odoo18/odoo/odoo-bin"
 alias odoo17="odoo17_python /opt/odoo17/odoo/odoo-bin"
@@ -26,6 +28,7 @@ alias odoo14="odoo14_python /opt/odoo14/odoo/odoo-bin"
 alias odoo13="odoo13_python /opt/odoo13/odoo/odoo-bin"
 alias odoo12="odoo12_python /opt/odoo12/odoo/odoo-bin"
 alias odoo11="odoo11_python /opt/odoo11/odoo/odoo-bin"
+alias odoo10="odoo10_python /opt/odoo10/odoo/odoo-bin"
 
 function find_odoo_config() {
     # Search for config/odoo{number}.conf
@@ -68,7 +71,7 @@ function odoo() {
         return
     fi
 
-    if [ "$1" = "shell" ]; then
+    if [ "$1" = "shell" ] || [ "$1" = "upgrade_code" ]; then
         eval "odoo$odoo_version $1 -c $config"
     else
         eval "odoo$odoo_version -c $config $*"
@@ -105,6 +108,14 @@ function install_odoo_modules() {
         return
     fi
 
-    for module in $(ls -d *); odoo -i "$module" --stop-after-init;
+    for module in $(ls -d *)
+    do
+        echo "Installing $module"
+        odoo -i "$module" --stop-after-init;
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to install $module"
+            return
+        fi
+    done
 }
 

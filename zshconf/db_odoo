@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function check_filestore() {
+function db_odoo_filestore() {
     echo "Im checking"
 }
 
