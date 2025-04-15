@@ -41,3 +41,10 @@ vim.opt.colorcolumn = "80"
 vim.opt.splitright = true
 vim.opt.splitbelow = true
 
+vim.opt.list = true
+vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+
+vim.opt.confirm = true
+
+vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })

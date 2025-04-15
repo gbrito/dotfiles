@@ -1,12 +1,21 @@
 return {
     "nvim-telescope/telescope.nvim",
-
-    tag = "0.1.6",
-
+    event = 'VimEnter',
     dependencies = {
-        "nvim-lua/plenary.nvim",
-        "nvim-telescope/telescope-live-grep-args.nvim",
-        "nvim-tree/nvim-web-devicons",
+      'nvim-lua/plenary.nvim',
+      {
+        'nvim-telescope/telescope-fzf-native.nvim',
+        build = 'make',
+
+        -- `cond` is a condition used to determine whether this plugin should be
+        -- installed and loaded.
+        cond = function()
+          return vim.fn.executable 'make' == 1
+        end,
+      },
+      { 'nvim-telescope/telescope-live-grep-args.nvim' },
+      { 'nvim-telescope/telescope-ui-select.nvim' },
+      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
 
     config = function()
@@ -15,8 +24,12 @@ return {
         local builtin = require("telescope.builtin")
 
         telescope.load_extension("live_grep_args")
-
         telescope.setup({
+            extensions = {
+              ['ui-select'] = {
+                require('telescope.themes').get_dropdown(),
+              },
+            },
             defaults = {
                 vimgrep_arguments = {
                     "rg",
@@ -48,6 +61,9 @@ return {
                 }
             }
         })
+
+        pcall(require('telescope').load_extension, 'fzf')
+        pcall(require('telescope').load_extension, 'ui-select')
 
         vim.keymap.set("n", "<leader>ff",
             ":lua require('telescope.builtin').find_files({ follow = true, hidden = true })<CR>",
