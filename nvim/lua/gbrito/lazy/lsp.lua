@@ -1,192 +1,101 @@
 return {
-    "VonHeikemen/lsp-zero.nvim",
+    "neovim/nvim-lspconfig",
     dependencies = {
-        "neovim/nvim-lspconfig",
-        "williamboman/mason.nvim",
-        "williamboman/mason-lspconfig.nvim",
-        "hrsh7th/nvim-cmp",
-        "hrsh7th/cmp-nvim-lsp",
-        "hrsh7th/cmp-nvim-lua",
-        "hrsh7th/cmp-buffer",
-        "hrsh7th/cmp-path",
-        "saadparwaiz1/cmp_luasnip",
-        "hrsh7th/cmp-cmdline",
-        "rafamadriz/friendly-snippets",
-        "j-hui/fidget.nvim",
-        "jose-elias-alvarez/null-ls.nvim",
-        "MunifTanjim/prettier.nvim",
+        { 'williamboman/mason.nvim', opts = {} },
+        'williamboman/mason-lspconfig.nvim',
+        'WhoIsSethDaniel/mason-tool-installer.nvim',
+        { 'j-hui/fidget.nvim',       opts = {} },
+        'saghen/blink.cmp',
     },
-
     config = function()
-        local cmp = require('cmp')
-        local cmp_lsp = require("cmp_nvim_lsp")
-        local lsp_zero = require('lsp-zero')
-        local luasnip = require('luasnip')
+        vim.api.nvim_create_autocmd('LspAttach', {
+            group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
+            callback = function(event)
+                local map = function(keys, func, desc, mode)
+                    mode = mode or 'n'
+                    vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
+                end
+                map('<leader>cn', vim.lsp.buf.rename, '[R]e[n]ame')
+                map('<leader>ca', vim.lsp.buf.code_action, 'Goto [C]ode [A]ction', { 'n', 'x' })
+                map('<leader>cr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+                map('gi', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+                map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+                map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+                map('K', vim.lsp.buf.hover, '[H]over')
+                map('gO', require('telescope.builtin').lsp_document_symbols, 'Open Document Symbols')
+                map('gW', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'Open Workspace Symbols')
+                map('gt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
+            end,
+        })
 
-        require("fidget").setup({})
-
-        local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-        cmp.setup({
-            formatting = lsp_zero.cmp_format(),
-            completion = {
-                completeopt = "menu,menuone,preview,noselect",
-            },
-            mapping = cmp.mapping.preset.insert({
-                ['<C-k>'] = cmp.mapping.select_prev_item(cmp_select),
-                ['<C-j>'] = cmp.mapping.select_next_item(cmp_select),
-                ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                ['<C-f>'] = cmp.mapping.scroll_docs(4),
-                ['<C-e>'] = cmp.mapping.abort(), -- close completion window
-                ['<CR>'] = cmp.mapping.confirm({ select = false }),
-                ['<C-Space>'] = cmp.mapping.complete(),
-                ['<Tab>'] = cmp.mapping(function(fallback)
-                    if luasnip.expand_or_jumpable() then
-                        luasnip.expand_or_jump()
-                    else
-                        fallback()
-                    end
-                end),
-                ['<S-Tab>'] = cmp.mapping(function(fallback)
-                    if luasnip.jumpable(-1) then
-                        luasnip.jump(-1)
-                    else
-                        fallback()
-                    end
-                end),
-            }),
-            -- sources for autocompletion
-            sources = cmp.config.sources({
-                { name = "luasnip" }, -- snippets
-                { name = "nvim_lsp" },
-                { name = "buffer" },  -- text within current buffer
-                { name = "path" },    -- file system paths
-            }),
-            snippet = {
-                expand = function(args)
-                    require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+        vim.diagnostic.config {
+            severity_sort = true,
+            float = { border = 'rounded', source = 'if_many' },
+            underline = { severity = vim.diagnostic.severity.ERROR },
+            signs = vim.g.have_nerd_font and {
+                text = {
+                    [vim.diagnostic.severity.ERROR] = '󰅚 ',
+                    [vim.diagnostic.severity.WARN] = '󰀪 ',
+                    [vim.diagnostic.severity.INFO] = '󰋽 ',
+                    [vim.diagnostic.severity.HINT] = '󰌶 ',
+                },
+            } or {},
+            virtual_text = {
+                source = 'if_many',
+                spacing = 2,
+                format = function(diagnostic)
+                    local diagnostic_message = {
+                        [vim.diagnostic.severity.ERROR] = diagnostic.message,
+                        [vim.diagnostic.severity.WARN] = diagnostic.message,
+                        [vim.diagnostic.severity.INFO] = diagnostic.message,
+                        [vim.diagnostic.severity.HINT] = diagnostic.message,
+                    }
+                    return diagnostic_message[diagnostic.severity]
                 end,
             },
-        })
-
-        -- Setup up vim-dadbod
-        cmp.setup.filetype({ "sql" }, {
-            sources = {
-                { name = "vim-dadbod-completion" },
-                { name = "buffer" },
-            },
-        })
-
-        vim.diagnostic.config({
-            -- update_in_insert = true,
-            float = {
-                focusable = false,
-                style = "minimal",
-                border = "rounded",
-                source = "always",
-                header = "",
-                prefix = "",
-            },
-        })
-
-        local lua_opts = lsp_zero.nvim_lua_ls()
-        require('lspconfig').lua_ls.setup(lua_opts)
-        local keymap = vim.keymap -- for conciseness
-        local opts = { noremap = true, silent = true }
-
-        local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-        for type, icon in pairs(signs) do
-            local hl = "DiagnosticSign" .. type
-            vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-        end
-
-        lsp_zero.on_attach(function(client, bufnr)
-            opts.buffer = bufnr
-            keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
-            keymap.set("n", "gD", vim.lsp.buf.declaration, opts)                  -- go to declaration
-            keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
-            keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
-            keymap.set("n", "<leader>ws", function() vim.lsp.buf.workspace_symbol() end, opts)
-            keymap.set("n", "<leader>of", function() vim.diagnostic.open_float() end, opts)
-            keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, opts)
-            keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, opts)
-            keymap.set("n", "<leader>ca", function() vim.lsp.buf.code_action() end, opts)
-            keymap.set("n", "<leader>cr", function() vim.lsp.buf.references() end, opts)
-            keymap.set("n", "<leader>cn", function() vim.lsp.buf.rename() end, opts)
-            keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
-            keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
-        end)
-
-        -- define our custom language server here
-        lsp_zero.new_client({
-            name = 'odoo-lsp',
-            cmd = { 'odoo-lsp' },
-            filetypes = { 'javascript', 'xml', 'python' },
-            root_dir = function()
-                return lsp_zero.dir.find_first({ '.odoo_lsp', '.odoo_lsp.json' })
-            end,
-        })
-
-        require('mason').setup({})
-        require('mason-lspconfig').setup({
-            handlers = {
-                lsp_zero.default_setup,
-            },
-        })
-
-        local null_ls = require("null-ls")
-        local sources = {
-            null_ls.builtins.formatting.beautysh,
-            null_ls.builtins.formatting.prettier,
-            null_ls.builtins.formatting.black,
-            null_ls.builtins.diagnostics.ruff,
-            null_ls.builtins.diagnostics.write_good,
         }
 
-        null_ls.setup({
-            sources = sources,
-            on_attach = function(client, bufnr)
-                if client.supports_method("textDocument/formatting") then
-                    vim.keymap.set("n", "<Leader>f", function()
-                        vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
-                    end, { buffer = bufnr, desc = "[lsp] format" })
-                end
-
-                if client.supports_method("textDocument/rangeFormatting") then
-                    vim.keymap.set("x", "<Leader>f", function()
-                        vim.lsp.buf.format({ bufnr = vim.api.nvim_get_current_buf() })
-                    end, { buffer = bufnr, desc = "[lsp] format" })
-                end
+        vim.api.nvim_create_autocmd("BufEnter", {
+            pattern = { '*.js', '*.xml', '*.py' },
+            callback = function()
+                vim.lsp.start({
+                    name = 'odoo_lsp',
+                    cmd = { 'odoo-lsp' },
+                    filetypes = { 'javascript', 'xml', 'python' },
+                    root_dir = vim.fs.root(0, { '.odoo_lsp' }),
+                })
             end,
         })
 
-        local prettier = require("prettier")
-        prettier.setup({
-            bin = 'prettier',
-            cli_options = {
-                bracket_spacing = false,
-                use_tabs = false,
-                print_width = 88,
-                prose_wrap = "always",
-                semi = true,
-                trailing_comma = "es5",
-                html_whitespace_sensitivity = "strict",
+        local servers = {
+            lua_ls = {
+                settings = {
+                    Lua = {
+                        completion = {
+                            callSnippet = 'Replace',
+                        },
+                    },
+                },
             },
-            filetypes = {
-                "css",
-                "graphql",
-                "html",
-                "javascript",
-                "javascriptreact",
-                "json",
-                "less",
-                "markdown",
-                "scss",
-                "typescript",
-                "typescriptreact",
-                "xml",
-                "yaml",
-            },
+        }
+        local capabilities = require('blink.cmp').get_lsp_capabilities()
+        local ensure_installed = vim.tbl_keys(servers or {})
+        vim.list_extend(ensure_installed, {
+            'stylua',
+            'ruff',
         })
-    end
+        require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+        require('mason-lspconfig').setup {
+            ensure_installed = {},
+            automatic_installation = false,
+            handlers = {
+                function(server_name)
+                    local server = servers[server_name] or {}
+                    server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+                    require('lspconfig')[server_name].setup(server)
+                end,
+            },
+        }
+    end,
 }
