@@ -108,10 +108,20 @@ function install_odoo_modules() {
         return
     fi
 
-    for module in $(ls -d *)
+    db_name=$(grep -m1 -oP '^\s*db_name\s*=\s*\K.*' "$config")
+    if [ -z "$db_name" ]; then
+        echo "Error: No database name found in config file"
+        return
+    fi
+    db_drop "$db_name" >/dev/null 2>&1
+
+    for module_path in */
     do
+        [ -d "$module_path" ] || continue
+        module=${module_path%/}
         echo "Installing $module"
         odoo -i "$module" --stop-after-init;
+        db_drop "$db_name" >/dev/null 2>&1
         if [ $? -ne 0 ]; then
             echo "Error: Failed to install $module"
             return
