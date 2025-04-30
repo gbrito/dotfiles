@@ -62,7 +62,7 @@ return {
                     name = 'odoo_lsp',
                     cmd = { 'odoo-lsp' },
                     filetypes = { 'javascript', 'xml', 'python' },
-                    root_dir = vim.fs.root(0, { '.odoo_lsp' }),
+                    root_dir = vim.fs.root(vim.fn.getcwd(), { '.odoo_lsp' }),
                 })
             end,
         })
