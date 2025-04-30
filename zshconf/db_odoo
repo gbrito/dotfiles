@@ -100,8 +100,8 @@ function db_odoo_admin() {
     if [[ $# -eq 2 ]] ; then
         db_login=$2
     fi
-    echo "Changing admin password for user {$db_login}"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin' where login = '${db_login}';"
+    echo "Changing admin username and password for user {$db_login}"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin', login = 'admin' where login = '${db_login}';"
 
 }
 
