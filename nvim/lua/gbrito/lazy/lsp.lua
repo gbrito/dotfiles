@@ -94,6 +94,7 @@ return {
 
         require('mason-lspconfig').setup {
             ensure_installed = {},
+            automatic_enable = true,
             automatic_installation = false,
             handlers = {
                 function(server_name)
