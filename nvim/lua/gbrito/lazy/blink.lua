@@ -1,5 +1,6 @@
 return {
     'saghen/blink.cmp',
+    build = 'rustup run nightly cargo build --release',
     event = 'VimEnter',
     version = '1.*',
     dependencies = {
@@ -29,7 +30,14 @@ return {
             },
             opts = {},
         },
+        'brenoprata10/nvim-highlight-colors',
         'folke/lazydev.nvim',
+        'moyiz/blink-emoji.nvim',
+        'MahanRahmati/blink-nerdfont.nvim',
+        'Kaiser-Yang/blink-cmp-avante',
+
+
+
     },
     --- @module 'blink.cmp'
     --- @type blink.cmp.Config
@@ -43,20 +51,44 @@ return {
         },
 
         completion = {
-            documentation = { auto_show = false, auto_show_delay_ms = 500 },
+            documentation = { auto_show = true, auto_show_delay_ms = 500 },
         },
 
         sources = {
-            default = { 'lsp', 'path', 'snippets', 'lazydev' },
+            default = { 'avante', 'lazydev', 'lsp', 'path', 'snippets', 'buffer' },
+            -- default = { 'lsp', 'path', 'snippets', 'lazydev' },
             providers = {
-                lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+                avante = {
+                    module = 'blink-cmp-avante',
+                    name = 'Avante',
+                },
+                lazydev = {
+                    name = 'LazyDev',
+                    module = 'lazydev.integrations.blink',
+                    score_offset = 100,
+                },
+                nerdfont = {
+                    -- TODO: update appearance to only show emoji and not lsp symbol
+                    module = 'blink-nerdfont',
+                    name = 'Nerd Fonts',
+                    score_offset = 15,
+                    opts = { insert = true },
+                },
+                emoji = {
+                    -- TODO: update appearance to only show emoji and not lsp symbol
+                    module = 'blink-emoji',
+                    name = 'Emoji',
+                    score_offset = 25,
+                    opts = { insert = true },
+                },
             },
         },
 
         snippets = { preset = 'luasnip' },
 
         -- See :h blink-cmp-config-fuzzy for more information
-        fuzzy = { implementation = 'lua' },
+        fuzzy = { implementation = 'prefer_rust_with_warning' },
+
 
         -- Shows a signature help window while you type arguments for a function
         signature = { enabled = true },
