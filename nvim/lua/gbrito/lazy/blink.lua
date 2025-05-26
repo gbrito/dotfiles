@@ -17,17 +17,7 @@ return {
                 end
                 return 'make install_jsregexp'
             end)(),
-            dependencies = {
-                -- `friendly-snippets` contains a variety of premade snippets.
-                --    See the README about individual language/framework/plugin snippets:
-                --    https://github.com/rafamadriz/friendly-snippets
-                -- {
-                --   'rafamadriz/friendly-snippets',
-                --   config = function()
-                --     require('luasnip.loaders.from_vscode').lazy_load()
-                --   end,
-                -- },
-            },
+            dependencies = {},
             opts = {},
         },
         'brenoprata10/nvim-highlight-colors',
@@ -35,9 +25,6 @@ return {
         'moyiz/blink-emoji.nvim',
         'MahanRahmati/blink-nerdfont.nvim',
         'Kaiser-Yang/blink-cmp-avante',
-
-
-
     },
     --- @module 'blink.cmp'
     --- @type blink.cmp.Config
@@ -55,8 +42,7 @@ return {
         },
 
         sources = {
-            default = { 'avante', 'lazydev', 'lsp', 'path', 'snippets', 'buffer' },
-            -- default = { 'lsp', 'path', 'snippets', 'lazydev' },
+            default = { 'snippets', 'avante', 'lazydev', 'lsp', 'path', 'buffer' },
             providers = {
                 avante = {
                     module = 'blink-cmp-avante',
@@ -85,12 +71,7 @@ return {
         },
 
         snippets = { preset = 'luasnip' },
-
-        -- See :h blink-cmp-config-fuzzy for more information
         fuzzy = { implementation = 'prefer_rust_with_warning' },
-
-
-        -- Shows a signature help window while you type arguments for a function
         signature = { enabled = true },
     },
 }
