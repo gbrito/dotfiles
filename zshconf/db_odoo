@@ -56,6 +56,18 @@ function db_odoo_remove_report_url() {
     psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_config_parameter where key = 'report.url';"
 }
 
+function db_odoo_reset_assets() {
+    # arg$1 - Database name
+    if [[ $# -eq 0 ]] ; then
+        echo 'No db name given. exiting'
+        return 1
+    fi
+    export PGPASSWORD=odoo
+    db_name=$1
+    echo "Resetting assets"
+    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "DELETE FROM ir_attachment WHERE url like '/web/assets/%';"
+}
+
 function db_odoo_disable_users_totp() {
     # arg$1 - Database name
     if [[ $# -eq 0 ]] ; then
