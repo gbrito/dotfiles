@@ -71,6 +71,11 @@ function odoo() {
         return
     fi
 
+    if [ "$VIRTUAL_ENV" ]; then
+        deactivate
+    fi
+    eval "odoo${odoo_version}_venv"
+
     if [ "$1" = "shell" ] || [ "$1" = "upgrade_code" ]; then
         eval "odoo$odoo_version $1 -c $config"
     else
