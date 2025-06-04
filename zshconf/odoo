@@ -126,11 +126,11 @@ function install_odoo_modules() {
         module=${module_path%/}
         echo "Installing $module"
         odoo -i "$module" --stop-after-init;
-        db_drop "$db_name" >/dev/null 2>&1
         if [ $? -ne 0 ]; then
             echo "Error: Failed to install $module"
             return
         fi
+        db_drop "$db_name" >/dev/null 2>&1
     done
 }
 
