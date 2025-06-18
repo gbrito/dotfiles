@@ -120,6 +120,12 @@ function install_odoo_modules() {
     fi
     db_drop "$db_name" >/dev/null 2>&1
 
+    if [[ "$1" == "keep" ]]; then
+        echo "Keeping database $db_name for all module installation"
+    else
+        echo "Creating a new database $db_name for each module installation"
+    fi
+
     for module_path in */
     do
         [ -d "$module_path" ] || continue
@@ -130,7 +136,9 @@ function install_odoo_modules() {
             echo "Error: Failed to install $module"
             return
         fi
-        db_drop "$db_name" >/dev/null 2>&1
+        if [[ "$1" != "keep" ]]; then
+            db_drop "$db_name" >/dev/null 2>&1
+        fi
     done
 }
 
