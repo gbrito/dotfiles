@@ -13,7 +13,7 @@ function oca_mig_module {
     git format-patch --keep-subject --stdout origin/"$destiny"..origin/"$origin" -- "$module" | git am -3 --keep
     pre-commit run -a
     git add -A
-    git commit -m "[IMP] $module: pre-commit stuff"  --no-verify
+    git commit -m "[IMP] $module: pre-commit auto fixes"  --no-verify
 }
 
 function oca_mig_commit {
@@ -25,5 +25,5 @@ function oca_mig_commit {
     destiny=$2
     echo "First commit on $module to $destiny"
     git add --all
-    git commit -m "[$destiny][MIG] $module"
+    git commit -m "[MIG] $module: Migration to $destiny"
 }
