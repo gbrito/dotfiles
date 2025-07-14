@@ -4,7 +4,17 @@ return {
         { 'williamboman/mason.nvim', opts = {} },
         'williamboman/mason-lspconfig.nvim',
         'WhoIsSethDaniel/mason-tool-installer.nvim',
-        { 'j-hui/fidget.nvim',       opts = {} },
+        {
+            'j-hui/fidget.nvim',
+            opts = {
+                -- Options for the notification window
+                notification = {
+                    window = {
+                        winblend = 0,  -- Background transparency
+                    },
+                },
+            },
+        },
         'saghen/blink.cmp',
     },
     config = function()
@@ -59,7 +69,8 @@ return {
             odoo_lsp = {
                 filetypes = { 'javascript', 'xml', 'python' },
                 root_dir = function(fname)
-                    return require('lspconfig.util').root_pattern('.odoo_lsp')(fname)
+                    return require('lspconfig.util').root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
+                        or vim.fs.dirname(fname)
                 end,
             },
             pyright = {
@@ -98,7 +109,8 @@ return {
                     cmd = { 'odoo-lsp' },
                     filetypes = { 'javascript', 'xml', 'python' },
                     root_dir = function(fname)
-                        return lspconfig.util.root_pattern('.odoo_lsp')(fname)
+                        return lspconfig.util.root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
+                            or vim.fs.dirname(fname)
                     end,
                 },
             }
@@ -136,6 +148,8 @@ return {
                 end,
             },
         }
+        
+        -- Manually setup odoo_lsp since it's not available through Mason
         if servers.odoo_lsp then
             local server = servers.odoo_lsp
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})

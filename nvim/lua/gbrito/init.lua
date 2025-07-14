@@ -1,3 +1,5 @@
+vim.g.have_nerd_font = true
+
 require("gbrito.set")
 require("gbrito.remap")
 
