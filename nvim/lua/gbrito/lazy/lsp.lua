@@ -55,19 +55,13 @@ return {
             },
         }
 
-        vim.api.nvim_create_autocmd("BufEnter", {
-            pattern = { '*.js', '*.xml', '*.py' },
-            callback = function()
-                vim.lsp.start({
-                    name = 'odoo_lsp',
-                    cmd = { 'odoo-lsp' },
-                    filetypes = { 'javascript', 'xml', 'python' },
-                    root_dir = vim.fs.root(vim.fn.getcwd(), { '.odoo_lsp' }),
-                })
-            end,
-        })
-
         local servers = {
+            odoo_lsp = {
+                filetypes = { 'javascript', 'xml', 'python' },
+                root_dir = function(fname)
+                    return require('lspconfig.util').root_pattern('.odoo_lsp')(fname)
+                end,
+            },
             pyright = {
                 settings = {
                     pyright = {
@@ -93,7 +87,30 @@ return {
             },
         }
         local capabilities = require('blink.cmp').get_lsp_capabilities()
-        local ensure_installed = vim.tbl_keys(servers or {})
+
+        -- Define odoo_lsp server configuration
+        local lspconfig = require('lspconfig')
+        local configs = require('lspconfig.configs')
+
+        if not configs.odoo_lsp then
+            configs.odoo_lsp = {
+                default_config = {
+                    cmd = { 'odoo-lsp' },
+                    filetypes = { 'javascript', 'xml', 'python' },
+                    root_dir = function(fname)
+                        return lspconfig.util.root_pattern('.odoo_lsp')(fname)
+                    end,
+                },
+            }
+        end
+
+        -- Filter out odoo_lsp from ensure_installed since it's not available in Mason
+        local ensure_installed = {}
+        for server_name, _ in pairs(servers or {}) do
+            if server_name ~= "odoo_lsp" then
+                table.insert(ensure_installed, server_name)
+            end
+        end
         vim.list_extend(ensure_installed, {
             'beautysh',
             'html-lsp',
@@ -119,5 +136,10 @@ return {
                 end,
             },
         }
+        if servers.odoo_lsp then
+            local server = servers.odoo_lsp
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            require('lspconfig').odoo_lsp.setup(server)
+        end
     end,
 }
