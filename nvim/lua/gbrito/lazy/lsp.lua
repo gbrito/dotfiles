@@ -10,7 +10,7 @@ return {
                 -- Options for the notification window
                 notification = {
                     window = {
-                        winblend = 0,  -- Background transparency
+                        winblend = 0, -- Background transparency
                     },
                 },
             },
@@ -72,6 +72,9 @@ return {
                     return require('lspconfig.util').root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
                         or vim.fs.dirname(fname)
                 end,
+                init_options = {
+                    progress = true,
+                },
             },
             pyright = {
                 settings = {
@@ -98,6 +101,9 @@ return {
             },
         }
         local capabilities = require('blink.cmp').get_lsp_capabilities()
+        -- Ensure window/workDoneProgress capability is set
+        capabilities.window = capabilities.window or {}
+        capabilities.window.workDoneProgress = true
 
         -- Define odoo_lsp server configuration
         local lspconfig = require('lspconfig')
@@ -148,11 +154,17 @@ return {
                 end,
             },
         }
-        
+
         -- Manually setup odoo_lsp since it's not available through Mason
         if servers.odoo_lsp then
             local server = servers.odoo_lsp
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            -- Add explicit handlers to ensure notifications work
+            server.handlers = {
+                ["$/progress"] = vim.lsp.handlers.progress,
+                ["window/showMessage"] = vim.lsp.handlers.show_message,
+                ["window/logMessage"] = vim.lsp.handlers.log_message,
+            }
             require('lspconfig').odoo_lsp.setup(server)
         end
     end,
