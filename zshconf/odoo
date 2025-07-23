@@ -106,7 +106,7 @@ function venv_odoo() {
 }
 
 function install_odoo_modules() {
-    # Install all modules in the current directory
+    # Install specified modules or all modules in the current directory
     config=$(find_odoo_config)
     if [ -z "$config" ]; then
         echo "Error: No configuration file"
@@ -120,23 +120,49 @@ function install_odoo_modules() {
     fi
     db_drop "$db_name" >/dev/null 2>&1
 
+    local keep_db=false
+    local modules_start_index=1
     if [[ "$1" == "keep" ]]; then
+        keep_db=true
+        modules_start_index=2
         echo "Keeping database $db_name for all module installation"
     else
         echo "Creating a new database $db_name for each module installation"
     fi
 
-    for module_path in */
-    do
-        [ -d "$module_path" ] || continue
-        module=${module_path%/}
+    # Get modules list
+    local modules=()
+    if [ $# -ge $modules_start_index ]; then
+        shift $((modules_start_index - 1))
+
+        for arg in "$@"; do
+            # Split each argument by comma (handles comma-separated lists)
+            IFS=',' read -ra split_modules <<< "$arg"
+            for module in "${split_modules[@]}"; do
+                # Trim whitespace and skip empty entries
+                module=$(echo "$module" | xargs)
+                if [[ -n "$module" ]]; then
+                    modules+=("$module")
+                fi
+            done
+        done
+    else
+        # No modules specified, use all directories in current path
+        for module_path in */; do
+            [ -d "$module_path" ] || continue
+            modules+=("${module_path%/}")
+        done
+    fi
+
+    # Install each module
+    for module in "${modules[@]}"; do
         echo "Installing $module"
-        odoo -i "$module" --stop-after-init;
+        odoo -i "$module" --stop-after-init
         if [ $? -ne 0 ]; then
             echo "Error: Failed to install $module"
             return
         fi
-        if [[ "$1" != "keep" ]]; then
+        if [ "$keep_db" = false ]; then
             db_drop "$db_name" >/dev/null 2>&1
         fi
     done
