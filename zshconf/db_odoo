@@ -1,7 +1,35 @@
 #!/usr/bin/env bash
 
 function db_odoo_filestore() {
-    echo "Im checking"
+    # arg$1 - Database name
+    # arg$2 - Source filestore path (can be relative)
+    if [[ $# -lt 2 ]]; then
+        echo "Error: Database name and filestore path required"
+        return 1
+    fi
+
+    local db_name=$1
+    local filestore_source=$2
+    local filestore_dest="$HOME/.local/share/Odoo/filestore/${db_name}"
+
+    # Check if source filestore exists
+    if [[ ! -d "$filestore_source" ]]; then
+        echo "Error: Source filestore not found at: $filestore_source"
+        return 1
+    fi
+
+    # Create parent directory if it doesn't exist
+    mkdir -p "$HOME/.local/share/Odoo/filestore"
+
+    if [[ -d "$filestore_dest" ]]; then
+        echo "Removing existing filestore at: $filestore_dest"
+        rm -rf "$filestore_dest"
+    fi
+
+    echo "Moving filestore from $filestore_source to $filestore_dest"
+    mv "$filestore_source" "$filestore_dest"
+
+    echo "Filestore moved successfully for database: $db_name"
 }
 
 function db_odoo_reset() {
@@ -120,24 +148,58 @@ function db_odoo_admin() {
 }
 
 function db_restore() {
-    # arg$1 - Database name to restore into
-    # arg$2 - Dump of the database .sql
-    # arg$3 - 1 if you dont want to clean the database
-    if [[ $# -eq 0 ]] ; then
+    # Parse arguments
+    local db_name=""
+    local restore_file=""
+    local filestore_path=""
+    local skip_clean=false
+
+    # Process arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip-clean)
+                skip_clean=true
+                shift
+                ;;
+            *)
+                if [[ -z "$db_name" ]]; then
+                    db_name="$1"
+                elif [[ -z "$restore_file" ]]; then
+                    restore_file="$1"
+                elif [[ -z "$filestore_path" ]]; then
+                    filestore_path="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate required arguments
+    if [[ -z "$db_name" ]]; then
         echo 'No db name given. exiting'
         return 1
     fi
+
+    if [[ -z "$restore_file" ]]; then
+        echo 'No restore file given. exiting'
+        return 1
+    fi
+
     export PGPASSWORD=odoo
-    db_name=$1
-    restore_file=$2
     dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
     createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
     # Load sql dump
     psql -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}" < "${restore_file}"
-    if [[ $3 != '1' ]]; then
-        db_odoo_reset "$1"
+
+    # Handle filestore if provided
+    if [[ -n "$filestore_path" ]]; then
+        db_odoo_filestore "$db_name" "$filestore_path"
     fi
-    echo Restored db "$1"
+
+    if [[ "$skip_clean" != true ]]; then
+        db_odoo_reset "$db_name"
+    fi
+    echo "Restored db $db_name"
 }
 
 function db_backup {
@@ -179,21 +241,58 @@ function db_dump {
 }
 
 function db_dump_restore {
-    if [[ $# -eq 0 ]]; then
+    # Parse arguments
+    local db_name=""
+    local restore_file=""
+    local filestore_path=""
+    local skip_clean=false
+
+    # Process arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip-clean)
+                skip_clean=true
+                shift
+                ;;
+            *)
+                if [[ -z "$db_name" ]]; then
+                    db_name="$1"
+                elif [[ -z "$restore_file" ]]; then
+                    restore_file="$1"
+                elif [[ -z "$filestore_path" ]]; then
+                    filestore_path="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate required arguments
+    if [[ -z "$db_name" ]]; then
         echo "No database name provided. Doing nothing."
         return 1
     fi
+
+    if [[ -z "$restore_file" ]]; then
+        echo "No restore file provided. Doing nothing."
+        return 1
+    fi
+
     export PGPASSWORD=odoo
-    db_name=$1
-    restore_file=$2
     echo "Create an empty database ${db_name}"
     dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
     createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
     # Load dump
     echo "Start restoring ${restore_file} in ${db_name}"
     pg_restore -h 127.0.0.1 -p 5432 -U odoo -w --no-owner --no-acl -d "${db_name}" < "${restore_file}"
-    if [[ $3 != '1' ]]; then
-        db_odoo_reset "$1"
+
+    # Handle filestore if provided
+    if [[ -n "$filestore_path" ]]; then
+        db_odoo_filestore "$db_name" "$filestore_path"
+    fi
+
+    if [[ "$skip_clean" != true ]]; then
+        db_odoo_reset "$db_name"
     fi
     echo "Restored database ${db_name}"
 }
