@@ -10,7 +10,7 @@ alias odoo12_venv="source /opt/odoo12/odoo12-venv/bin/activate"
 alias odoo11_venv="source /opt/odoo11/odoo11-venv/bin/activate"
 alias odoo10_venv="source /opt/odoo10/odoo10-venv/bin/activate"
 
-alias odoo18_python="uv run /opt/odoo18/odoo18-venv/bin/python3 -s"
+alias odoo18_python="UV_PROJECT_ENVIRONMENT=/opt/odoo18/odoo18-venv /opt/odoo18/odoo18-venv/bin/python3 -s"
 alias odoo17_python="/opt/odoo17/odoo17-venv/bin/python3"
 alias odoo16_python="/opt/odoo16/odoo16-venv/bin/python3"
 alias odoo15_python="/opt/odoo15/odoo15-venv/bin/python3"
@@ -53,7 +53,7 @@ function find_odoo_version() {
     if [ -z "$1" ]; then
         return
     fi
-    echo "$config" | grep -o -E '[0-9]+' | tail -1
+    echo "$1" | grep -o -E '[0-9]+' | tail -1
 }
 
 function odoo() {
@@ -72,14 +72,16 @@ function odoo() {
     fi
 
     if [ "$VIRTUAL_ENV" ]; then
-        deactivate
+        if type deactivate >/dev/null 2>&1; then
+            deactivate
+        fi
     fi
     eval "odoo${odoo_version}_venv"
 
     if [ "$1" = "shell" ] || [ "$1" = "upgrade_code" ]; then
         eval "odoo$odoo_version $1 -c $config"
     else
-        eval "odoo$odoo_version -c $config $*"
+        eval "odoo$odoo_version -c $config $@"
     fi
 }
 
@@ -120,6 +122,7 @@ function install_odoo_modules() {
     fi
     db_drop "$db_name" >/dev/null 2>&1
 
+    # Check if first argument is "keep"
     local keep_db=false
     local modules_start_index=1
     if [[ "$1" == "keep" ]]; then
@@ -131,18 +134,21 @@ function install_odoo_modules() {
     fi
 
     # Get modules list
-    local modules=()
+    local -a modules
     if [ $# -ge $modules_start_index ]; then
         shift $((modules_start_index - 1))
 
         for arg in "$@"; do
             # Split each argument by comma (handles comma-separated lists)
-            IFS=',' read -ra split_modules <<< "$arg"
-            for module in "${split_modules[@]}"; do
+            # Use zsh-compatible array splitting
+            local IFS=','
+            local -a split_mods
+            split_mods=(${=arg})
+            for module in $split_mods; do
                 # Trim whitespace and skip empty entries
-                module=$(echo "$module" | xargs)
+                module=${module// /}
                 if [[ -n "$module" ]]; then
-                    modules+=("$module")
+                    modules+=($module)
                 fi
             done
         done
@@ -150,18 +156,26 @@ function install_odoo_modules() {
         # No modules specified, use all directories in current path
         for module_path in */; do
             [ -d "$module_path" ] || continue
-            modules+=("${module_path%/}")
+            modules+=(${module_path%/})
         done
     fi
 
     # Install each module
     for module in "${modules[@]}"; do
         echo "Installing $module"
-        odoo -i "$module" --stop-after-init
-        if [ $? -ne 0 ]; then
-            echo "Error: Failed to install $module"
-            return
+        odoo -i $module --stop-after-init
+        local exit_code=$?
+        # Check exit code
+        if [ $exit_code -ne 0 ]; then
+            # Exit code 130 means interrupted by Ctrl-C
+            if [ $exit_code -eq 130 ]; then
+                echo "Installation interrupted by user"
+                return 130
+            fi
+            echo "Error: Failed to install $module (exit code: $exit_code)"
+            return 1
         fi
+
         if [ "$keep_db" = false ]; then
             db_drop "$db_name" >/dev/null 2>&1
         fi
