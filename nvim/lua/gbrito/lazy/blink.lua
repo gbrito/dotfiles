@@ -24,7 +24,6 @@ return {
         'folke/lazydev.nvim',
         'moyiz/blink-emoji.nvim',
         'MahanRahmati/blink-nerdfont.nvim',
-        'Kaiser-Yang/blink-cmp-avante',
     },
     --- @module 'blink.cmp'
     --- @type blink.cmp.Config
@@ -42,12 +41,9 @@ return {
         },
 
         sources = {
-            default = { 'snippets', 'avante', 'lazydev', 'lsp', 'path', 'buffer' },
+            default = { 'snippets', 'lazydev', 'lsp', 'path', 'buffer' },
             providers = {
-                avante = {
-                    module = 'blink-cmp-avante',
-                    name = 'Avante',
-                },
+
                 lazydev = {
                     name = 'LazyDev',
                     module = 'lazydev.integrations.blink',
@@ -71,7 +67,7 @@ return {
         },
 
         snippets = { preset = 'luasnip' },
-        fuzzy = { implementation = 'prefer_rust_with_warning' },
+        fuzzy = { implementation = 'lua' },
         signature = { enabled = true },
     },
 }
