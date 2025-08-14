@@ -10,7 +10,7 @@ alias odoo12_venv="source /opt/odoo12/odoo12-venv/bin/activate"
 alias odoo11_venv="source /opt/odoo11/odoo11-venv/bin/activate"
 alias odoo10_venv="source /opt/odoo10/odoo10-venv/bin/activate"
 
-alias odoo18_python="UV_PROJECT_ENVIRONMENT=/opt/odoo18/odoo18-venv /opt/odoo18/odoo18-venv/bin/python3 -s"
+alias odoo18_python="UV_PROJECT_ENVIRONMENT=/opt/odoo18/odoo18-venv /opt/odoo18/odoo18-venv/bin/python3 -u"
 alias odoo17_python="/opt/odoo17/odoo17-venv/bin/python3"
 alias odoo16_python="/opt/odoo16/odoo16-venv/bin/python3"
 alias odoo15_python="/opt/odoo15/odoo15-venv/bin/python3"
