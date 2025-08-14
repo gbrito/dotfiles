@@ -37,7 +37,7 @@ return {
                 map('gt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
 
                 -- Navigate to related diagnostic information
-                map('<leader>cd', function()
+                map('<leader>cc', function()
                     local line = vim.fn.line('.') - 1
                     local diagnostics = vim.diagnostic.get(0, { lnum = line })
 
@@ -98,7 +98,30 @@ return {
 
         vim.diagnostic.config {
             severity_sort = true,
-            float = { border = 'rounded', source = 'if_many' },
+            float = { 
+                border = 'rounded', 
+                source = 'if_many',
+                -- Format function to include related information
+                format = function(diagnostic)
+                    local message = diagnostic.message
+                    -- Check for related information from LSP
+                    if diagnostic.user_data and diagnostic.user_data.lsp then
+                        local related = diagnostic.user_data.lsp.relatedInformation
+                        if related and #related > 0 then
+                            message = message .. "\n\nRelated Information:"
+                            for _, info in ipairs(related) do
+                                message = message .. "\n• " .. info.message
+                                if info.location and info.location.uri then
+                                    local filename = vim.uri_to_fname(info.location.uri)
+                                    local line = info.location.range.start.line + 1
+                                    message = message .. " (" .. filename .. ":" .. line .. ")"
+                                end
+                            end
+                        end
+                    end
+                    return message
+                end
+            },
             underline = { severity = vim.diagnostic.severity.ERROR },
             signs = vim.g.have_nerd_font and {
                 text = {
