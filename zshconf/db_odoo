@@ -672,8 +672,30 @@ function db_con {
 }
 
 function db_list {
-    # List all databases
-    docker_psql "${DB_USER}" "${DB_PASSWORD}" --list
+    # List databases, optionally filtered by pattern
+    # Usage: db_list [pattern]
+    # Examples: db_list, db_list test, db_list "test_*"
+
+    if [[ $# -eq 0 ]]; then
+        # No pattern - show all databases
+        docker_psql "${DB_USER}" "${DB_PASSWORD}" --list
+    else
+        local pattern="${1}"
+
+        # Check if pattern contains wildcards
+        if [[ "${pattern}" == *"*"* ]] || [[ "${pattern}" == *"?"* ]]; then
+            # Convert wildcards to regex for grep
+            local grep_pattern="${pattern//\*/.*}"
+            grep_pattern="${grep_pattern//\?/.}"
+            # List databases and filter with grep
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | head -n 3
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | grep -E "^ ${grep_pattern}" || true
+        else
+            # Simple pattern - use grep for partial match
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | head -n 3
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | grep -i "${pattern}" || true
+        fi
+    fi
 }
 
 
