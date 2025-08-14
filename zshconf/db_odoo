@@ -524,25 +524,133 @@ function db_drop {
         return 1
     fi
 
-    local database="${1}"
+    local pattern="${1}"
+    local databases=()
+    local system_dbs=("postgres" "template0" "template1")
+    local is_pattern=false
 
-    if ! validate_db_name "${database}"; then
+    # Check if pattern contains wildcards
+    if [[ "${pattern}" == *"*"* ]] || [[ "${pattern}" == *"?"* ]]; then
+        is_pattern=true
+        # Get list of databases matching the pattern with proper error handling
+        local db_list
+        if ! db_list=$(docker_psql "${DB_USER}" "${DB_PASSWORD}" -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1') ORDER BY datname;"); then
+            echo "Error: Failed to list databases" >&2
+            return 1
+        fi
+
+        # Convert pattern to regex safely using parameter expansion
+        local regex_pattern="${pattern//\*/.+}"
+        regex_pattern="${regex_pattern//\?/.}"
+        regex_pattern="^${regex_pattern}$"
+
+        # Filter databases that match the pattern with validation
+        while IFS= read -r db; do
+            db="${db#"${db%%[![:space:]]*}"}"  # Trim leading whitespace
+            db="${db%"${db##*[![:space:]]}"}"  # Trim trailing whitespace
+
+            if [[ -n "${db}" ]] && [[ "${db}" =~ ${regex_pattern} ]]; then
+                # Validate each matched database name
+                if validate_db_name "${db}"; then
+                    # Additional check for system databases
+                    local is_system=false
+                    for sys_db in "${system_dbs[@]}"; do
+                        if [[ "${db}" == "${sys_db}" ]]; then
+                            is_system=true
+                            break
+                        fi
+                    done
+
+                    if [[ "${is_system}" == false ]]; then
+                        databases+=("${db}")
+                    else
+                        echo "Warning: Skipping system database: ${db}" >&2
+                    fi
+                else
+                    echo "Warning: Skipping invalid database name: ${db}" >&2
+                fi
+            fi
+        done <<< "${db_list}"
+    else
+        # Single database - treat it as a list with one item
+        local database="${pattern}"
+
+        # Check if trying to delete system database
+        for sys_db in "${system_dbs[@]}"; do
+            if [[ "${database}" == "${sys_db}" ]]; then
+                echo "Error: Cannot delete system database '${database}'"
+                return 1
+            fi
+        done
+
+        if ! validate_db_name "${database}"; then
+            return 1
+        fi
+
+        databases+=("${database}")
+    fi
+
+    if [[ ${#databases[@]} -eq 0 ]]; then
+        echo "No databases found matching pattern: ${pattern}"
         return 1
     fi
 
-    # Terminate active connections using dollar-quoting for safety
-    docker_psql "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" \
-        -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE datname = \$\$${database}\$\$ AND pid <> pg_backend_pid();" || {
-        echo "Warning: Could not terminate connections to ${database}" >&2
-    }
+    # Show databases that will be deleted and ask for confirmation if multiple
+    if [[ ${#databases[@]} -gt 1 ]]; then
+        echo "The following databases will be deleted:"
+        printf '  - %s\n' "${databases[@]}"
+        echo
+        echo -n "Press Y to confirm deletion, any other key to cancel: "
+        read -k 1 REPLY
+        echo
 
-    # Drop the database
-    docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${database}" || {
-        echo "Error: Failed to drop database ${database}" >&2
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Deletion cancelled."
+            return 0
+        fi
+    fi
+
+    local failed_count=0
+    for database in "${databases[@]}"; do
+        if [[ ${#databases[@]} -gt 1 ]]; then
+            echo "Dropping database: ${database}"
+        fi
+
+        # Terminate active connections using proper parameterized format
+        docker_psql "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" \
+            -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${database//\'/\'\'}' AND pid <> pg_backend_pid();" >/dev/null 2>&1
+
+        # Drop the database using the safe dropdb command
+        # Capture output to check if database existed
+        local drop_output=$(docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${database}" 2>&1)
+        local drop_status=$?
+
+        if [[ ${drop_status} -ne 0 ]]; then
+            echo "Error: Failed to drop database ${database}" >&2
+            ((failed_count++))
+            continue
+        fi
+
+        # Check if database actually existed (NOTICE message means it didn't exist)
+        if [[ "${drop_output}" == *"NOTICE:"*"does not exist"* ]]; then
+            echo "Database ${database} does not exist"
+        else
+            if [[ ${#databases[@]} -gt 1 ]]; then
+                echo "Successfully dropped database: ${database}"
+            else
+                echo "Dropped database ${database}"
+            fi
+        fi
+    done
+
+    if [[ ${failed_count} -gt 0 ]]; then
+        echo "Warning: Failed to drop ${failed_count} database(s)"
         return 1
-    }
+    fi
 
-    echo "Dropped database ${database}"
+    if [[ ${#databases[@]} -gt 1 ]]; then
+        echo "All ${#databases[@]} database(s) dropped successfully."
+    fi
 }
 
 function db_con {
@@ -567,3 +675,5 @@ function db_list {
     # List all databases
     docker_psql "${DB_USER}" "${DB_PASSWORD}" --list
 }
+
+
