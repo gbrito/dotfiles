@@ -1,5 +1,43 @@
 #!/usr/bin/env bash
 
+# PostgreSQL Docker Configuration
+readonly POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-local-postgres}"  # Container name
+readonly POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+readonly POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
+readonly DB_USER="${DB_USER:-odoo}"
+readonly DB_ADMIN_USER="${DB_ADMIN_USER:-postgres}"
+readonly DB_PASSWORD="${DB_PASSWORD:-odoo}"
+readonly DB_ADMIN_PASSWORD="${DB_ADMIN_PASSWORD:-postgres}"
+
+function docker_psql() {
+    local user="${1}"
+    local password="${2}"
+    shift 2
+    docker exec -i "${POSTGRES_CONTAINER}" \
+        env PGPASSWORD="${password}" \
+        psql -U "${user}" "$@"
+}
+
+# Helper function for Docker PostgreSQL tools
+function docker_pg() {
+    local tool="${1}"  # pg_dump, dropdb, createdb, etc.
+    local user="${2}"
+    local password="${3}"
+    shift 3
+    docker exec -i "${POSTGRES_CONTAINER}" \
+        env PGPASSWORD="${password}" \
+        "${tool}" -U "${user}" "$@"
+}
+
+function validate_db_name() {
+    local db_name="${1}"
+    if [[ ! "${db_name}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo "Error: Invalid database name format: ${db_name}" >&2
+        return 1
+    fi
+    return 0
+}
+
 function db_odoo_filestore() {
     # arg$1 - Database name
     # arg$2 - Source filestore path (can be relative)
@@ -38,19 +76,40 @@ function db_odoo_reset() {
         echo 'No db name given. exiting'
         return 1
     fi
-    echo "Deactivating Crons"
-    export PGPASSWORD=odoo
-    db_name=$1
-    # Deactivate crons
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_cron set active = false;"
-    # Delete mail servers
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from fetchmail_server;"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_mail_server;"
 
-    db_odoo_fix_code "${db_name}"
-    db_odoo_admin "${db_name}"
-    db_odoo_remove_report_url "${db_name}"
-    db_odoo_disable_users_totp "${db_name}"
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
+    echo "Deactivating Crons"
+
+    # Deactivate crons
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE ir_cron SET active = false;" || {
+        echo "Error: Failed to deactivate crons" >&2
+        return 1
+    }
+
+    # Delete mail servers
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM fetchmail_server;" || {
+        echo "Error: Failed to delete fetchmail servers" >&2
+        return 1
+    }
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_mail_server;" || {
+        echo "Error: Failed to delete mail servers" >&2
+        return 1
+    }
+
+    db_odoo_fix_code "${db_name}" || return 1
+    db_odoo_admin "${db_name}" || return 1
+    db_odoo_remove_report_url "${db_name}" || return 1
+    db_odoo_disable_users_totp "${db_name}" || return 1
+
     echo "Database ${db_name} ready for test"
 }
 
@@ -60,16 +119,35 @@ function db_odoo_fix_code() {
         echo 'No db name given. exiting'
         return 1
     fi
-    export PGPASSWORD=odoo
-    db_name=$1
-    uuid=$(uuidgen)
-    today_date="$(date -d '+1 year' +'%Y-%m-%d %H:%M:%S')"
+
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
+    local uuid=$(uuidgen)
+    local today_date="$(date -d '+1 year' +'%Y-%m-%d %H:%M:%S')"
 
     echo "Delete enterprise code"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_config_parameter where key like '%enterprise_code%';"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_config_parameter set value = '${uuid}' where key like '%uuid%';"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_config_parameter WHERE key LIKE '%enterprise_code%';" || {
+        echo "Error: Failed to delete enterprise code" >&2
+        return 1
+    }
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE ir_config_parameter SET value = \$\$${uuid}\$\$ WHERE key LIKE '%uuid%';" || {
+        echo "Error: Failed to update UUID" >&2
+        return 1
+    }
+
     echo "Update database create date"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update ir_config_parameter set value = '${today_date}' where key = 'database.expiration_date';"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE ir_config_parameter SET value = \$\$${today_date}\$\$ WHERE key = 'database.expiration_date';" || {
+        echo "Error: Failed to update expiration date" >&2
+        return 1
+    }
 }
 
 function db_odoo_remove_report_url() {
@@ -78,10 +156,19 @@ function db_odoo_remove_report_url() {
         echo 'No db name given. exiting'
         return 1
     fi
+
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     echo "Deleting report.url key"
-    export PGPASSWORD=odoo
-    db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_config_parameter where key = 'report.url';"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_config_parameter WHERE key = 'report.url';" || {
+        echo "Error: Failed to delete report.url" >&2
+        return 1
+    }
 }
 
 function db_odoo_reset_assets() {
@@ -90,10 +177,19 @@ function db_odoo_reset_assets() {
         echo 'No db name given. exiting'
         return 1
     fi
-    export PGPASSWORD=odoo
-    db_name=$1
+
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     echo "Resetting assets"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "DELETE FROM ir_attachment WHERE url like '/web/assets/%';"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_attachment WHERE url LIKE '/web/assets/%';" || {
+        echo "Error: Failed to reset assets" >&2
+        return 1
+    }
 }
 
 function db_odoo_disable_users_totp() {
@@ -102,10 +198,19 @@ function db_odoo_disable_users_totp() {
         echo 'No db name given. exiting'
         return 1
     fi
+
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     echo "Disable two factor authentication"
-    export PGPASSWORD=odoo
-    db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set totp_secret = null;"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE res_users SET totp_secret = NULL;" || {
+        echo "Error: Failed to disable TOTP" >&2
+        return 1
+    }
 }
 
 function db_odoo_disable_customziation() {
@@ -116,17 +221,41 @@ function db_odoo_disable_customziation() {
         return 1
     fi
 
-    user_id=2
+    local db_name="${1}"
+    local user_id=2
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     if [[ $# -eq 2 ]] ; then
-        user_id=$2
+        user_id="${2}"
+        # Validate user_id is numeric
+        if ! [[ "${user_id}" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid user_id format: ${user_id}" >&2
+            return 1
+        fi
     fi
 
     echo "Disable studio and extra customization"
-    export PGPASSWORD=odoo
-    db_name=$1
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_ui_view where create_uid = ${user_id};"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_model_fields where create_uid = ${user_id};"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "delete from ir_model where create_uid = ${user_id};"
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_ui_view WHERE create_uid = ${user_id};" || {
+        echo "Error: Failed to delete UI views" >&2
+        return 1
+    }
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_model_fields WHERE create_uid = ${user_id};" || {
+        echo "Error: Failed to delete model fields" >&2
+        return 1
+    }
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DELETE FROM ir_model WHERE create_uid = ${user_id};" || {
+        echo "Error: Failed to delete models" >&2
+        return 1
+    }
 }
 
 function db_odoo_admin() {
@@ -136,15 +265,31 @@ function db_odoo_admin() {
         echo 'No db name given. exiting'
         return 1
     fi
-    export PGPASSWORD=odoo
-    db_name=$1
-    db_login="admin"
-    if [[ $# -eq 2 ]] ; then
-        db_login=$2
-    fi
-    echo "Changing admin username and password for user {$db_login}"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w -d "${db_name}" -c "update res_users set password = 'admin', login = 'admin' where login = '${db_login}';"
 
+    local db_name="${1}"
+    local db_login="admin"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
+    if [[ $# -eq 2 ]] ; then
+        db_login="${2}"
+        # Validate login to prevent injection (allow alphanumeric, underscore, dash, @, .)
+        if ! [[ "${db_login}" =~ ^[a-zA-Z0-9_@.-]+$ ]]; then
+            echo "Error: Invalid login format: ${db_login}" >&2
+            return 1
+        fi
+    fi
+
+    echo "Changing admin username and password for user ${db_login}"
+
+    # Use dollar-quoting to safely escape the login parameter
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE res_users SET password = 'admin', login = 'admin' WHERE login = \$\$${db_login}\$\$;" || {
+        echo "Error: Failed to update admin user" >&2
+        return 1
+    }
 }
 
 function db_restore() {
@@ -180,24 +325,49 @@ function db_restore() {
         return 1
     fi
 
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     if [[ -z "$restore_file" ]]; then
         echo 'No restore file given. exiting'
         return 1
     fi
 
-    export PGPASSWORD=odoo
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
-    createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
-    # Load sql dump
-    psql -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}" < "${restore_file}"
+    # Check if restore file exists
+    if [[ ! -f "$restore_file" ]]; then
+        echo "Error: Restore file not found: $restore_file" >&2
+        return 1
+    fi
+
+    # Drop and recreate database
+    docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${db_name}" || {
+        echo "Warning: Could not drop database ${db_name}" >&2
+    }
+
+    docker_pg createdb "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
+        echo "Error: Failed to create database ${db_name}" >&2
+        return 1
+    }
+
+    # Load sql dump - pipe file content to docker
+    echo "Loading SQL dump into ${db_name}..."
+    cat "${restore_file}" | docker_psql "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
+        echo "Error: Failed to restore database from ${restore_file}" >&2
+        return 1
+    }
 
     # Handle filestore if provided
     if [[ -n "$filestore_path" ]]; then
-        db_odoo_filestore "$db_name" "$filestore_path"
+        db_odoo_filestore "$db_name" "$filestore_path" || {
+            echo "Warning: Failed to restore filestore" >&2
+        }
     fi
 
     if [[ "$skip_clean" != true ]]; then
-        db_odoo_reset "$db_name"
+        db_odoo_reset "$db_name" || {
+            echo "Warning: Failed to reset database" >&2
+        }
     fi
     echo "Restored db $db_name"
 }
@@ -207,21 +377,36 @@ function db_backup {
     # arg$2 - boolean with default false. If true is passed,
     #         database will be compressed to be send to odoo for upgrading
     if [[ $# -eq 0 ]]; then
-        echo No database name entered, exiting
+        echo "No database name entered, exiting"
         return 1
     fi
-    export PGPASSWORD=odoo
-    database=$1
-    now="$(date +'%Y_%m_%d_%H_%M_%S')"
-    echo Going to backup "$1" database, please wait
-    if [[ $2 = true ]]; then
-        output_file="$1_bak_$now.gz"
-        pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v "$1" | gzip -9 > "$output_file"
-    else
-        output_file="$1_bak_$now.sql"
-        pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -v "$1" > "$output_file"
+
+    local database="${1}"
+
+    if ! validate_db_name "${database}"; then
+        return 1
     fi
-    echo Backup for database can be found @ "$output_file"
+
+    local now="$(date +'%Y_%m_%d_%H_%M_%S')"
+    local output_file
+
+    echo "Going to backup ${database} database, please wait"
+
+    if [[ "${2}" = true ]]; then
+        output_file="${database}_bak_${now}.gz"
+        docker_pg pg_dump "${DB_USER}" "${DB_PASSWORD}" -v "${database}" | gzip -9 > "${output_file}" || {
+            echo "Error: Failed to create compressed backup" >&2
+            return 1
+        }
+    else
+        output_file="${database}_bak_${now}.sql"
+        docker_pg pg_dump "${DB_USER}" "${DB_PASSWORD}" -v "${database}" > "${output_file}" || {
+            echo "Error: Failed to create backup" >&2
+            return 1
+        }
+    fi
+
+    echo "Backup for database can be found @ ${output_file}"
 }
 
 function db_dump {
@@ -229,15 +414,26 @@ function db_dump {
         echo "No database name provided. Doing nothing."
         return 1
     fi
-    database="$1"
-    if [[ $# -eq 2 ]]; then
-        output_file="$2.dump"
-    else
-        output_file="$1.dump"
+
+    local database="${1}"
+    local output_file
+
+    if ! validate_db_name "${database}"; then
+        return 1
     fi
-    export PGPASSWORD=odoo
-    pg_dump -h 127.0.0.1 -p 5432 -U odoo -w -F c -f "${output_file}" "${database}"
-    echo "Database dump of $database to $output_file done."
+
+    if [[ $# -eq 2 ]]; then
+        output_file="${2}.dump"
+    else
+        output_file="${database}.dump"
+    fi
+
+    docker_pg pg_dump "${DB_USER}" "${DB_PASSWORD}" -F c "${database}" > "${output_file}" || {
+        echo "Error: Failed to create database dump" >&2
+        return 1
+    }
+
+    echo "Database dump of ${database} to ${output_file} done."
 }
 
 function db_dump_restore {
@@ -273,26 +469,51 @@ function db_dump_restore {
         return 1
     fi
 
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
     if [[ -z "$restore_file" ]]; then
         echo "No restore file provided. Doing nothing."
         return 1
     fi
 
-    export PGPASSWORD=odoo
+    # Check if restore file exists
+    if [[ ! -f "$restore_file" ]]; then
+        echo "Error: Restore file not found: $restore_file" >&2
+        return 1
+    fi
+
     echo "Create an empty database ${db_name}"
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${db_name}"
-    createdb -h 127.0.0.1 -p 5432 -U odoo -w "${db_name}"
-    # Load dump
+    docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${db_name}" || {
+        echo "Warning: Could not drop database ${db_name}" >&2
+    }
+
+    docker_pg createdb "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
+        echo "Error: Failed to create database ${db_name}" >&2
+        return 1
+    }
+
+    # Load dump - pipe file content to docker
     echo "Start restoring ${restore_file} in ${db_name}"
-    pg_restore -h 127.0.0.1 -p 5432 -U odoo -w --no-owner --no-acl -d "${db_name}" < "${restore_file}"
+    cat "${restore_file}" | docker exec -i "${POSTGRES_CONTAINER}" \
+        env PGPASSWORD="${DB_PASSWORD}" \
+        pg_restore -U "${DB_USER}" --no-owner --no-acl -d "${db_name}" || {
+        echo "Error: Failed to restore database from ${restore_file}" >&2
+        return 1
+    }
 
     # Handle filestore if provided
     if [[ -n "$filestore_path" ]]; then
-        db_odoo_filestore "$db_name" "$filestore_path"
+        db_odoo_filestore "$db_name" "$filestore_path" || {
+            echo "Warning: Failed to restore filestore" >&2
+        }
     fi
 
     if [[ "$skip_clean" != true ]]; then
-        db_odoo_reset "$db_name"
+        db_odoo_reset "$db_name" || {
+            echo "Warning: Failed to reset database" >&2
+        }
     fi
     echo "Restored database ${db_name}"
 }
@@ -302,12 +523,26 @@ function db_drop {
         echo "No database name provided. Doing nothing."
         return 1
     fi
-    database="$1"
-    export PGPASSWORD=postgres
-    psql -h 127.0.0.1 -p 5432 -U postgres -w -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity where datname = '$database' and pid <> pg_backend_pid();"
-    export PGPASSWORD=odoo
-    dropdb -h 127.0.0.1 -p 5432 -U odoo -w --if-exists "${database}"
-    echo "Dropped database $database "
+
+    local database="${1}"
+
+    if ! validate_db_name "${database}"; then
+        return 1
+    fi
+
+    # Terminate active connections using dollar-quoting for safety
+    docker_psql "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" \
+        -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE datname = \$\$${database}\$\$ AND pid <> pg_backend_pid();" || {
+        echo "Warning: Could not terminate connections to ${database}" >&2
+    }
+
+    # Drop the database
+    docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${database}" || {
+        echo "Error: Failed to drop database ${database}" >&2
+        return 1
+    }
+
+    echo "Dropped database ${database}"
 }
 
 function db_con {
@@ -316,12 +551,19 @@ function db_con {
         return 1
     fi
 
-    export PGPASSWORD=odoo
-    database="$1"
-    psql -h 127.0.0.1 -p 5432 -U odoo -w "$database"
+    local database="${1}"
+
+    if ! validate_db_name "${database}"; then
+        return 1
+    fi
+
+    # Connect to database interactively
+    docker exec -it "${POSTGRES_CONTAINER}" \
+        env PGPASSWORD="${DB_PASSWORD}" \
+        psql -U "${DB_USER}" "${database}"
 }
 
 function db_list {
-    export PGPASSWORD=odoo
-    psql -h 127.0.0.1 -p 5432 -U odoo -w --list
+    # List all databases
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" --list
 }
