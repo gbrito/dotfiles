@@ -1,9 +1,13 @@
 function ColorMyPencils(color)
     color = color or "tokyonight"
-    vim.cmd.colorscheme(color)
-
-    vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-    vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+    local ok, _ = pcall(vim.cmd.colorscheme, color)
+    if not ok then
+        vim.notify("Colorscheme " .. color .. " not found, falling back to default", vim.log.levels.WARN)
+        vim.cmd.colorscheme("default")
+    else
+        vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+    end
 end
 
 return {
