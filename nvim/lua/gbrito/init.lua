@@ -11,7 +11,8 @@ local gbrito_group = augroup('gbrito', {})
 local autocmd = vim.api.nvim_create_autocmd
 local yank_group = augroup('HighlightYank', {})
 
-function R(name)
+_G.gbrito = _G.gbrito or {}
+_G.gbrito.reload = function(name)
     require("plenary.reload").reload_module(name)
 end
 
@@ -35,7 +36,12 @@ autocmd('TextYankPost', {
 autocmd({ "BufWritePre" }, {
     group = gbrito_group,
     pattern = "*",
-    command = [[%s/\s\+$//e]],
+    callback = function()
+        local save_cursor = vim.fn.getpos(".")
+        vim.cmd([[keeppatterns %s/\s\+$//e]])
+        vim.fn.setpos(".", save_cursor)
+    end,
+    desc = "Remove trailing whitespace on save"
 })
 
 vim.g.netrw_browse_split = 0

@@ -1,5 +1,5 @@
--- Big cursor
-vim.opt.guicursor = ""
+-- Block cursor in normal mode, bar in insert
+vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
 
 -- Line numbers
 vim.opt.nu = true
