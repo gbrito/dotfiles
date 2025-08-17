@@ -436,6 +436,23 @@ function db_dump {
     echo "Database dump of ${database} to ${output_file} done."
 }
 
+function check_dump_version {
+    local dump_file="${1}"
+
+    # Extract version byte from dump header (offset 5)
+    local version_byte=$(od -An -N1 -j5 -td1 < "${dump_file}" | tr -d ' ')
+
+    # Map version to PostgreSQL version
+    case "${version_byte}" in
+        14) echo "15" ;;
+        15) echo "16" ;;
+        13) echo "14" ;;
+        12) echo "13" ;;
+        11) echo "12" ;;
+        *) echo "unknown (byte: ${version_byte})" ;;
+    esac
+}
+
 function db_dump_restore {
     # Parse arguments
     local db_name=""
@@ -484,6 +501,11 @@ function db_dump_restore {
         return 1
     fi
 
+    # Check dump version compatibility
+    local dump_pg_version=$(check_dump_version "${restore_file}")
+    local container_pg_version=$(docker exec "${POSTGRES_CONTAINER}" psql --version | grep -oE '[0-9]+' | head -1)
+
+    echo "Dump created with PostgreSQL ${dump_pg_version}, container has PostgreSQL ${container_pg_version}"
     echo "Create an empty database ${db_name}"
     docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${db_name}" || {
         echo "Warning: Could not drop database ${db_name}" >&2
@@ -494,7 +516,6 @@ function db_dump_restore {
         return 1
     }
 
-    # Load dump - pipe file content to docker
     echo "Start restoring ${restore_file} in ${db_name}"
     cat "${restore_file}" | docker exec -i "${POSTGRES_CONTAINER}" \
         env PGPASSWORD="${DB_PASSWORD}" \
