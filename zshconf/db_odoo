@@ -555,7 +555,7 @@ function db_drop {
         is_pattern=true
         # Get list of databases matching the pattern with proper error handling
         local db_list
-        if ! db_list=$(docker_psql "${DB_USER}" "${DB_PASSWORD}" -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1') ORDER BY datname;"); then
+        if ! db_list=$(docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres -t -c "SELECT datname FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1') ORDER BY datname;"); then
             echo "Error: Failed to list databases" >&2
             return 1
         fi
@@ -699,7 +699,7 @@ function db_list {
 
     if [[ $# -eq 0 ]]; then
         # No pattern - show all databases
-        docker_psql "${DB_USER}" "${DB_PASSWORD}" --list
+        docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list
     else
         local pattern="${1}"
 
@@ -709,12 +709,12 @@ function db_list {
             local grep_pattern="${pattern//\*/.*}"
             grep_pattern="${grep_pattern//\?/.}"
             # List databases and filter with grep
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | head -n 3
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | grep -E "^ ${grep_pattern}" || true
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | head -n 3
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | grep -E "^ ${grep_pattern}" || true
         else
             # Simple pattern - use grep for partial match
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | head -n 3
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" --list | grep -i "${pattern}" || true
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | head -n 3
+            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | grep -i "${pattern}" || true
         fi
     fi
 }
