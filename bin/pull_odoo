@@ -2,6 +2,13 @@
 
 for dir in /opt/odoo*/
 do
+    version=$(basename "$dir" | sed 's/odoo//')
+
+    if [ "$version" -lt 16 ] 2>/dev/null; then
+        echo "Skipping Odoo $version (< 16)"
+        continue
+    fi
+
     odoo_dir="${dir}odoo"
     enterprise_dir="${dir}odoo-enterprise-addons"
     themes_dir="${dir}design-themes"

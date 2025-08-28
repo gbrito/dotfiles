@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+VERSIONS=(16.0 17.0 18.0)
+ODOO_DIR="/opt/enterprise_odoo"
+
+# make a list of all the versions
+if [ ! -d "$ODOO_DIR" ]; then
+    echo "Enterprise Odoo directory not found"
+    exit 1
+fi
+
+for version in ${VERSIONS[@]}; do
+    echo "Updating ${version}"
+    git -C ${ODOO_DIR} checkout ${version}
+    git -C ${ODOO_DIR} pull origin ${version}:${version}
+    git -C ${ODOO_DIR} push
+done
