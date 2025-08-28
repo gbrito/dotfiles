@@ -98,8 +98,8 @@ return {
 
         vim.diagnostic.config {
             severity_sort = true,
-            float = { 
-                border = 'rounded', 
+            float = {
+                border = 'rounded',
                 source = 'if_many',
                 -- Format function to include related information
                 format = function(diagnostic)
@@ -150,12 +150,35 @@ return {
             odoo_lsp = {
                 filetypes = { 'javascript', 'xml', 'python' },
                 root_dir = function(fname)
-                    return require('lspconfig.util').root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
-                        or vim.fs.dirname(fname)
+                    local root = require('lspconfig.util').root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
+                    if root then
+                        return root
+                    end
+                    -- Fallback to current working directory if no root pattern found
+                    return vim.fn.getcwd()
                 end,
                 init_options = {
                     progress = true,
                 },
+            },
+            ruff = {
+                init_options = {
+                    settings = {
+                        -- Ruff configuration
+                        organizeImports = true,
+                        fixAll = true,
+                        configuration = [[
+[format]
+quote-style = "double"
+indent-style = "space"
+
+[lint.flake8-quotes]
+inline-quotes = "double"
+docstring-quotes = "double"
+multiline-quotes = "double"
+                        ]],
+                    }
+                }
             },
             pyright = {
                 settings = {
@@ -196,8 +219,24 @@ return {
                     cmd = { 'odoo-lsp' },
                     filetypes = { 'javascript', 'xml', 'python' },
                     root_dir = function(fname)
-                        return lspconfig.util.root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
-                            or vim.fs.dirname(fname)
+                        -- Look for Odoo-specific files/directories
+                        local root = lspconfig.util.root_pattern(
+                            '.odoo_lsp',
+                            '.odoo_lsp.json'
+                        )(fname)
+
+                        if root then
+                            return root
+                        end
+
+                        -- Try to get the file's directory
+                        local dir = vim.fs.dirname(fname)
+                        if dir and dir ~= "" and dir ~= "/" then
+                            return dir
+                        end
+
+                        -- Last resort: use current working directory
+                        return vim.fn.getcwd()
                     end,
                 },
             }
@@ -246,6 +285,21 @@ return {
                 ["window/showMessage"] = vim.lsp.handlers.show_message,
                 ["window/logMessage"] = vim.lsp.handlers.log_message,
             }
+            -- Ensure we have a valid root_dir function
+            server.root_dir = function(fname)
+                local util = require('lspconfig.util')
+                -- Try to find root based on patterns
+                local root = util.root_pattern('.odoo_lsp', '.odoo_lsp.json')(fname)
+                if root then
+                    return root
+                end
+                -- If no root found, use the file's directory or cwd
+                local dir = vim.fs.dirname(fname)
+                if dir and dir ~= "" then
+                    return dir
+                end
+                return vim.fn.getcwd()
+            end
             require('lspconfig').odoo_lsp.setup(server)
         end
     end,
