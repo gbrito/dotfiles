@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSIONS=(16.0 17.0 18.0)
+VERSIONS=(15.0 16.0 17.0 18.0)
 ODOO_DIR="/opt/enterprise_odoo"
 
 # make a list of all the versions
@@ -13,5 +13,5 @@ for version in ${VERSIONS[@]}; do
     echo "Updating ${version}"
     git -C ${ODOO_DIR} checkout ${version}
     git -C ${ODOO_DIR} pull origin ${version}:${version}
-    git -C ${ODOO_DIR} push
+    git -C ${ODOO_DIR} push upstream
 done
