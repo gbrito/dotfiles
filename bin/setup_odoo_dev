@@ -1,0 +1,189 @@
+#!/bin/zsh
+
+set -e
+
+print_info() {
+    echo "\033[1;34m[INFO]\033[0m $1"
+}
+
+print_success() {
+    echo "\033[1;32m[SUCCESS]\033[0m $1"
+}
+
+print_error() {
+    echo "\033[1;31m[ERROR]\033[0m $1"
+}
+
+validate_version() {
+    if [[ ! "$1" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        print_error "Invalid version format. Please use format like '16', '17', '18.0', etc."
+        return 1
+    fi
+    return 0
+}
+
+echo "================================================="
+echo "Odoo Development Environment Setup Script"
+echo "================================================="
+echo
+
+# Prompt for Odoo version
+while true; do
+    echo -n "Enter the Odoo version you want to install (e.g., 16, 17, 18.0): "
+    read ODOO_VERSION
+
+    if [[ -z "$ODOO_VERSION" ]]; then
+        print_error "Version cannot be empty. Please try again."
+        continue
+    fi
+
+    if validate_version "$ODOO_VERSION"; then
+        break
+    fi
+done
+
+while true; do
+    echo -n "Enter the Python version for the virtual environment (e.g., 3.10, 3.11, 3.12): "
+    read PYTHON_VERSION
+
+    if [[ -z "$PYTHON_VERSION" ]]; then
+        print_error "Python version cannot be empty. Please try again."
+        continue
+    fi
+
+    if [[ "$PYTHON_VERSION" =~ ^3\.[0-9]+$ ]]; then
+        break
+    else
+        print_error "Invalid Python version. Please use format 3.x (e.g., 3.8, 3.12)."
+    fi
+done
+
+CURRENT_USER=$(whoami)
+
+ODOO_DIR="/opt/odoo${ODOO_VERSION}"
+BRANCH_VERSION="${ODOO_VERSION}.0"
+VENV_NAME="odoo${ODOO_VERSION}-venv"
+
+
+if [[ "$ODOO_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+    BRANCH_VERSION="$ODOO_VERSION"
+fi
+
+print_info "Setting up Odoo $ODOO_VERSION environment..."
+print_info "Directory: $ODOO_DIR"
+print_info "Branch: $BRANCH_VERSION"
+print_info "User: $CURRENT_USER"
+print_info "Python version: $PYTHON_VERSION"
+print_info "Virtual environment: $VENV_NAME"
+echo
+
+echo -n "Do you want to proceed? (y/N): "
+read CONFIRM
+
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    print_info "Setup cancelled by user."
+    exit 0
+fi
+
+echo
+print_info "Starting Odoo $ODOO_VERSION setup..."
+
+print_info "Creating directory $ODOO_DIR..."
+if sudo mkdir -p "$ODOO_DIR"; then
+    print_success "Directory created successfully"
+else
+    print_error "Failed to create directory"
+    exit 1
+fi
+
+print_info "Setting ownership to $CURRENT_USER:$CURRENT_USER..."
+if sudo chown -R "$CURRENT_USER:$CURRENT_USER" "$ODOO_DIR"; then
+    print_success "Ownership set successfully"
+else
+    print_error "Failed to set ownership"
+    exit 1
+fi
+
+print_info "Changing to directory $ODOO_DIR..."
+cd "$ODOO_DIR"
+print_success "Changed to $ODOO_DIR"
+
+if [[ -d "$ODOO_DIR/odoo" ]]; then
+    print_info "Odoo core already exists, skipping clone"
+else
+    print_info "Cloning Odoo core (branch: $BRANCH_VERSION)..."
+    if git clone git@github.com:odoo/odoo.git --single-branch --branch "$BRANCH_VERSION" odoo; then
+        print_success "Odoo core cloned successfully"
+    else
+        print_error "Failed to clone Odoo core"
+        exit 1
+    fi
+fi
+
+if [[ -d "$ODOO_DIR/odoo-enterprise-addons" ]]; then
+    print_info "Enterprise addons already exist, skipping clone"
+else
+    print_info "Cloning Odoo enterprise addons (branch: $BRANCH_VERSION)..."
+    if git clone git@github.com:gbrito/enterprise_odoo.git --single-branch --branch "$BRANCH_VERSION" odoo-enterprise-addons; then
+        print_success "Enterprise addons cloned successfully"
+    else
+        print_error "Failed to clone enterprise addons"
+        exit 1
+    fi
+fi
+
+if [[ -d "$ODOO_DIR/design-themes" ]]; then
+    print_info "Design themes already exist, skipping clone"
+else
+    print_info "Cloning design themes (branch: $BRANCH_VERSION)..."
+    if git clone git@github.com:odoo/design-themes.git --single-branch --branch "$BRANCH_VERSION"; then
+        print_success "Design themes cloned successfully"
+    else
+        print_error "Failed to clone design themes"
+        exit 1
+    fi
+fi
+
+print_info "Creating virtual environment with Python $PYTHON_VERSION..."
+if uv venv --python "$PYTHON_VERSION" "$VENV_NAME"; then
+    print_success "Virtual environment created successfully"
+else
+    print_error "Failed to create virtual environment"
+    exit 1
+fi
+
+print_info "Activating virtual environment..."
+source "$VENV_NAME/bin/activate"
+
+print_info "Modifying requirements.txt (replacing psycopg2 with psycopg2-binary and removing LDAP packages)..."
+if sed -i -e '/psycopg2[^-]/d' -e '/ldap/Id' odoo/requirements.txt && echo "psycopg2-binary" >> odoo/requirements.txt; then
+    print_success "Requirements.txt modified successfully"
+else
+    print_error "Failed to modify requirements.txt"
+    exit 1
+fi
+
+print_info "Installing requirements with uv pip..."
+if uv pip install -r odoo/requirements.txt; then
+    print_success "Requirements installed successfully"
+else
+    print_error "Failed to install requirements"
+    exit 1
+fi
+
+print_info "Resetting odoo repository..."
+if (cd odoo && git reset --hard); then
+    print_success "Odoo repository reset successfully"
+else
+    print_error "Failed to reset odoo repository"
+    exit 1
+fi
+
+echo
+echo "================================================="
+print_success "Odoo $ODOO_VERSION environment setup completed!"
+echo "================================================="
+
+print_info "Virtual environment: $VENV_NAME (Python $PYTHON_VERSION)"
+print_info "Requirements installed and repository reset"
+print_info "To activate: source $ODOO_DIR/$VENV_NAME/bin/activate"
