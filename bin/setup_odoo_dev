@@ -155,8 +155,8 @@ fi
 print_info "Activating virtual environment..."
 source "$VENV_NAME/bin/activate"
 
-print_info "Modifying requirements.txt (replacing psycopg2 with psycopg2-binary and removing LDAP packages)..."
-if sed -i -e '/psycopg2[^-]/d' -e '/ldap/Id' odoo/requirements.txt && echo "psycopg2-binary" >> odoo/requirements.txt; then
+print_info "Modifying requirements.txt (fixing package compatibility issues)..."
+if sed -i -e '/psycopg2[^-]/d' -e '/ldap/Id' -e '/reportlab/d' -e '/gevent/d' -e '/num2words/d' -e '/xlsxwriter/d' -e '/vobject/d' -e '/setuptools/d' odoo/requirements.txt && echo -e "psycopg2-binary\nreportlab\ngevent\nnum2words\nxlsxwriter\nvobject\nsetuptools" >> odoo/requirements.txt; then
     print_success "Requirements.txt modified successfully"
 else
     print_error "Failed to modify requirements.txt"
@@ -177,6 +177,20 @@ if (cd odoo && git reset --hard); then
 else
     print_error "Failed to reset odoo repository"
     exit 1
+fi
+
+SITE_PACKAGES_DIR="$ODOO_DIR/$VENV_NAME/lib/python$PYTHON_VERSION/site-packages"
+if [[ -L "$SITE_PACKAGES_DIR/odoo" ]]; then
+    print_info "Symlink to odoo already exists in site-packages, skipping"
+else
+    print_info "Creating symlink to odoo in site-packages..."
+    if cd "$SITE_PACKAGES_DIR" && ln -sf "$ODOO_DIR/odoo/odoo" odoo; then
+        print_success "Symlink created successfully"
+        cd "$ODOO_DIR"
+    else
+        print_error "Failed to create symlink"
+        exit 1
+    fi
 fi
 
 echo
