@@ -214,7 +214,7 @@ function db_odoo_disable_users_totp() {
 
     echo "Disable auth_password_policy.minlength"
     docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "DELETE FROM ir_config_parameter WHERE key LIKE '%auth_password_policy.minlength%';" || {
+        -c "DELETE FROM ir_config_parameter WHERE key = 'auth_password_policy.minlength';" || {
         echo "Error: Failed to disable minlegth password" >&2
         return 1
     }
