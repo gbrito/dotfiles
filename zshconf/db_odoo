@@ -293,7 +293,7 @@ function db_odoo_admin() {
 
     # Use dollar-quoting to safely escape the login parameter
     docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "UPDATE res_users SET password = 'admin', login = 'admin' WHERE login = \$\$${db_login}\$\$;" || {
+        -c "UPDATE res_users SET password = 'admin', login = 'admin', active = True WHERE login = \$\$${db_login}\$\$;" || {
         echo "Error: Failed to update admin user" >&2
         return 1
     }
