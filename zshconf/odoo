@@ -81,10 +81,11 @@ function odoo() {
     fi
     eval "odoo${odoo_version}_venv"
 
+    # Always use script for proper PTY allocation (needed for pdb debugging)
     if [ "$1" = "shell" ] || [ "$1" = "upgrade_code" ]; then
-        eval "odoo$odoo_version $1 -c $config"
+        script -q -c "eval odoo$odoo_version $1 -c $config" /dev/null
     else
-        eval "odoo$odoo_version -c $config $@"
+        script -q -c "eval odoo$odoo_version -c $config $*" /dev/null
     fi
 }
 
@@ -184,4 +185,3 @@ function install_odoo_modules() {
         fi
     done
 }
-
