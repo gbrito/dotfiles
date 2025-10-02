@@ -9,8 +9,10 @@ return {
             opts = {
                 -- Options for the notification window
                 notification = {
+                    override_vim_notify = true, -- Use Fidget for vim.notify()
                     window = {
                         winblend = 0, -- Background transparency
+                        avoid = { 'NvimTree' }, -- Explicitly avoid nvim-tree windows
                     },
                 },
             },
@@ -161,6 +163,7 @@ return {
                     progress = true,
                 },
             },
+            sourcery = {},
             ruff = {
                 init_options = {
                     settings = {
@@ -209,9 +212,25 @@ multiline-quotes = "double"
         capabilities.window = capabilities.window or {}
         capabilities.window.workDoneProgress = true
 
-        -- Define odoo_lsp server configuration
+        -- Define custom LSP server configurations
         local lspconfig = require('lspconfig')
         local configs = require('lspconfig.configs')
+        
+        -- Define sourcery LSP configuration
+        if not configs.sourcery then
+            configs.sourcery = {
+                default_config = {
+                    cmd = { 'sourcery', 'lsp' },
+                    filetypes = { 'python' },
+                    root_dir = lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py', 'setup.cfg', 'requirements.txt'),
+                    init_options = {
+                        token = nil, -- Add your Sourcery token here if you have one
+                        extension_version = 'vim.lsp',
+                        editor_version = 'neovim',
+                    },
+                },
+            }
+        end
 
         if not configs.odoo_lsp then
             configs.odoo_lsp = {
@@ -254,6 +273,7 @@ multiline-quotes = "double"
             'html-lsp',
             'lua-language-server',
             'luacheck',
+            'prettier',
             'ruff',
             'pyright',
             'sourcery',
@@ -275,7 +295,7 @@ multiline-quotes = "double"
             },
         }
 
-        -- Manually setup odoo_lsp since it's not available through Mason
+        -- Manually setup custom LSP servers not available through Mason
         if servers.odoo_lsp then
             local server = servers.odoo_lsp
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
@@ -301,6 +321,13 @@ multiline-quotes = "double"
                 return vim.fn.getcwd()
             end
             require('lspconfig').odoo_lsp.setup(server)
+        end
+        
+        -- Manually setup sourcery since it requires custom configuration
+        if servers.sourcery then
+            local server = servers.sourcery
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            require('lspconfig').sourcery.setup(server)
         end
     end,
 }
