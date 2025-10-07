@@ -69,10 +69,20 @@ function odoo() {
     fi
 
     # Always use script for proper PTY allocation (needed for pdb debugging)
-    if [ "$1" = "shell" ] || [ "$1" = "upgrade_code" ]; then
-        script -q -c "$python_cmd $odoo_bin $1 -c $config" /dev/null
+    if [ "$1" = "shell" ]; then
+        script -q -c "$python_cmd $odoo_bin $1 -c $config; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
+    elif [ "$1" = "upgrade_code" ]; then
+        shift  # Remove 'upgrade_code' from arguments
+        script -q -c "$python_cmd $odoo_bin upgrade_code $*; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
     else
-        script -q -c "$python_cmd $odoo_bin -c $config $*" /dev/null
+        script -q -c "$python_cmd $odoo_bin -c $config $*; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
+    fi
+
+    # Read and return the actual exit code
+    if [ -f /tmp/odoo_exit_code.$$ ]; then
+        local exit_code=$(cat /tmp/odoo_exit_code.$$)
+        rm -f /tmp/odoo_exit_code.$$
+        return $exit_code
     fi
 }
 
