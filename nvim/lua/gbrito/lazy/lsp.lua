@@ -152,12 +152,17 @@ return {
             odoo_lsp = {
                 filetypes = { 'javascript', 'xml', 'python' },
                 root_dir = function(fname)
-                    local root = require('lspconfig.util').root_pattern('.odoo_lsp', '.odoo_lsp.json', '.git')(fname)
+                    local util = require('lspconfig.util')
+                    local cwd = vim.fn.getcwd()
+                    if util.root_pattern('.odoo_lsp', '.odoo_lsp.json')(cwd) then
+                        return cwd
+                    end
+                    local root = util.root_pattern('.odoo_lsp', '.odoo_lsp.json')(fname)
                     if root then
                         return root
                     end
-                    -- Fallback to current working directory if no root pattern found
-                    return vim.fn.getcwd()
+                    -- Fallback to current working directory
+                    return cwd
                 end,
                 init_options = {
                     progress = true,
@@ -215,7 +220,7 @@ multiline-quotes = "double"
         -- Define custom LSP server configurations
         local lspconfig = require('lspconfig')
         local configs = require('lspconfig.configs')
-        
+
         -- Define sourcery LSP configuration
         if not configs.sourcery then
             configs.sourcery = {
@@ -322,7 +327,7 @@ multiline-quotes = "double"
             end
             require('lspconfig').odoo_lsp.setup(server)
         end
-        
+
         -- Manually setup sourcery since it requires custom configuration
         if servers.sourcery then
             local server = servers.sourcery
