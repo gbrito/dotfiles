@@ -109,6 +109,7 @@ function db_odoo_reset() {
     db_odoo_admin "${db_name}" || return 1
     db_odoo_remove_report_url "${db_name}" || return 1
     db_odoo_disable_users_totp "${db_name}" || return 1
+    db_odoo_reset_assets "${db_name}" || return 1
 
     echo "Database ${db_name} ready for test"
 }
@@ -353,7 +354,7 @@ function db_restore() {
         -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${db_name}' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || {
         echo "Warning: Could not terminate connections to ${db_name}" >&2
     }
-    
+
     # Drop and recreate database
     docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${db_name}" || {
         echo "Warning: Could not drop database ${db_name}" >&2
@@ -520,14 +521,14 @@ function db_dump_restore {
     local container_pg_version=$(docker exec "${POSTGRES_CONTAINER}" psql --version | grep -oE '[0-9]+' | head -1)
 
     echo "Dump created with PostgreSQL ${dump_pg_version}, container has PostgreSQL ${container_pg_version}"
-    
+
     # Terminate all connections to the database before dropping
     echo "Terminating existing connections to database ${db_name}..."
     docker_psql "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" -d postgres \
         -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${db_name}' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || {
         echo "Warning: Could not terminate connections to ${db_name}" >&2
     }
-    
+
     echo "Create an empty database ${db_name}"
     docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${db_name}" || {
         echo "Warning: Could not drop database ${db_name}" >&2
