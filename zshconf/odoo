@@ -73,9 +73,9 @@ function odoo() {
         script -q -c "$python_cmd $odoo_bin $1 -c $config; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
     elif [ "$1" = "upgrade_code" ]; then
         shift  # Remove 'upgrade_code' from arguments
-        script -q -c "$python_cmd $odoo_bin upgrade_code $*; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
+        script -q -c "$python_cmd $odoo_bin upgrade_code $(printf '%q ' "$@"); echo \$? > /tmp/odoo_exit_code.$$" /dev/null
     else
-        script -q -c "$python_cmd $odoo_bin -c $config $*; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
+        script -q -c "$python_cmd $odoo_bin -c $config $(printf '%q ' "$@"); echo \$? > /tmp/odoo_exit_code.$$" /dev/null
     fi
 
     # Read and return the actual exit code
@@ -164,7 +164,7 @@ function install_odoo_modules() {
     # Install each module
     for module in "${modules[@]}"; do
         echo "Installing $module"
-        odoo -i $module --stop-after-init
+        odoo -i "$module" --stop-after-init
         local exit_code=$?
         # Check exit code
         if [ $exit_code -ne 0 ]; then
