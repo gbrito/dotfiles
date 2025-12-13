@@ -12,7 +12,12 @@ return {
                     override_vim_notify = true, -- Use Fidget for vim.notify()
                     window = {
                         winblend = 0, -- Background transparency
-                        avoid = { 'NvimTree' }, -- Explicitly avoid nvim-tree windows
+                    },
+                },
+                -- Explicitly disable implicit integrations
+                integration = {
+                    ["nvim-tree"] = {
+                        enable = false,
                     },
                 },
             },
@@ -266,10 +271,10 @@ multiline-quotes = "double"
             }
         end
 
-        -- Filter out odoo_lsp from ensure_installed since it's not available in Mason
+        -- Filter out custom LSP servers from ensure_installed since they're not available in Mason
         local ensure_installed = {}
         for server_name, _ in pairs(servers or {}) do
-            if server_name ~= "odoo_lsp" then
+            if server_name ~= "odoo_lsp" and server_name ~= "sourcery" then
                 table.insert(ensure_installed, server_name)
             end
         end
@@ -281,7 +286,6 @@ multiline-quotes = "double"
             'prettier',
             'ruff',
             'pyright',
-            'sourcery',
             'stylua',
             'typescript-language-server',
         })
@@ -304,12 +308,6 @@ multiline-quotes = "double"
         if servers.odoo_lsp then
             local server = servers.odoo_lsp
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            -- Add explicit handlers to ensure notifications work
-            server.handlers = {
-                ["$/progress"] = vim.lsp.handlers.progress,
-                ["window/showMessage"] = vim.lsp.handlers.show_message,
-                ["window/logMessage"] = vim.lsp.handlers.log_message,
-            }
             -- Ensure we have a valid root_dir function
             server.root_dir = function(fname)
                 local util = require('lspconfig.util')
