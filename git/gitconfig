@@ -1,9 +1,14 @@
 [user]
 	email = gbrito@gdsbb.org
 	name = Goncalo Brito
+	signingkey = 329FF7B007724BE9
 [init]
 	defaultBranch = main
 [core]
 	excludesfile = /home/gbrito/.gitignore_global
 [push]
 	autoSetupRemote = true
+[commit]
+	gpgsign = false
+[tag]
+	gpgsign = false
