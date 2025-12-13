@@ -215,10 +215,15 @@ bar {
 }
 
 # Get monitor names: swaymsg -t get_outputs
-output $laptop_monitor resolution 1920x1080
+output $laptop_monitor resolution 3840x2400@60Hz scale 2
 
-bindswitch --reload --locked lid:on output $laptop_monitor disable
+# Home
+output "BNQ BenQ RD280UA J2S0245901Q" scale 1.75
+
+# Laptop screen disabled by default, enable only on lid open
+output $laptop_monitor disable
 bindswitch --reload --locked lid:off output $laptop_monitor enable
+bindswitch --reload --locked lid:on output $laptop_monitor disable
 
 
 include /etc/sway/config.d/*
