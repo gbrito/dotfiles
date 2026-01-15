@@ -14,5 +14,4 @@ for version in ${VERSIONS[@]}; do
     git -C ${ODOO_DIR} checkout ${version}
     git -C ${ODOO_DIR} pull origin ${version}:${version}
     git -C ${ODOO_DIR} push upstream
-    git -C ${ODOO_DIR} push upstream_1
 done
