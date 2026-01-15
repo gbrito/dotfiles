@@ -666,7 +666,7 @@ function db_drop {
 
         # Drop the database using the safe dropdb command
         # Capture output to check if database existed
-        local drop_output=$(docker_pg dropdb "${DB_USER}" "${DB_PASSWORD}" --if-exists "${database}" 2>&1)
+        local drop_output=$(docker_pg dropdb "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" --if-exists "${database}" 2>&1)
         local drop_status=$?
 
         if [[ ${drop_status} -ne 0 ]]; then
