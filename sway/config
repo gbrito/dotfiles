@@ -220,10 +220,15 @@ output $laptop_monitor resolution 3840x2400@60Hz scale 2
 # Home
 output "BNQ BenQ RD280UA J2S0245901Q" scale 1.75
 
+# Office
+output "BNQ BenQ RD280UA J2S0245501Q" scale 1.75
+output "Dell Inc. DELL S2722QC HCPDMD3" scale 1.75
+
 # Laptop screen disabled by default, enable only on lid open
 output $laptop_monitor disable
 bindswitch --reload --locked lid:off output $laptop_monitor enable
 bindswitch --reload --locked lid:on output $laptop_monitor disable
 
+xwayland enable
 
 include /etc/sway/config.d/*
