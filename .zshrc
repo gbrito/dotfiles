@@ -38,6 +38,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
+export GPG_TTY=$(tty)
 export LANG=en_US.UTF-8
 export _JAVA_AWT_WM_NONREPARENTING=1
 
