@@ -162,9 +162,13 @@ bindsym Print exec grim -g "$(slurp)" - | swappy -f -
 
     for_window [app_id="galculator"] floating enable
     for_window [app_id="bluetui"] floating enable, border none, resize set 1170 780, move position center
+    for_window [app_id="impala"] floating enable, border none, resize set 1170 780, move position center
 
     # Bluetooth manager
     bindsym Ctrl+Alt+b exec foot --app-id=bluetui -e bluetui
+
+    # Network manager
+    bindsym Ctrl+Alt+n exec foot --app-id=impala -e impala
 
 #
 # Disable auto lock on full screen
