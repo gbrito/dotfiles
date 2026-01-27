@@ -2,7 +2,7 @@
     border: none;
     border-radius: 4px;
     /* `ttf-font-awesome` is required to be installed for icons */
-    font-family: "Roboto Mono Medium", Helvetica, Arial, sans-serif;
+    font-family: "Roboto Mono Medium", "Font Awesome 7 Free", "JetBrainsMono Nerd Font", Helvetica, Arial, sans-serif;
 
     /* adjust font-size value to your liking: */
     font-size: 22px;
@@ -69,6 +69,7 @@ window#waybar.chromium {
 #network,
 #pulseaudio,
 #custom-media,
+#custom-bluetooth,
 #tray,
 #mode,
 #idle_inhibitor,
@@ -146,6 +147,21 @@ label:focus {
 #pulseaudio.muted {
     background-color: #bbccdd;
     color: #333333;
+}
+
+#custom-bluetooth {
+    background-color: #bbccdd;
+    color: #333333;
+}
+
+#custom-bluetooth.disconnected {
+    background-color: #bbccdd;
+    color: #888888;
+}
+
+#custom-bluetooth.off {
+    background-color: #666666;
+    color: #aaaaaa;
 }
 
 #custom-media {

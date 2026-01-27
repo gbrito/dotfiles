@@ -45,9 +45,6 @@ exec swayidle -w \
     before-sleep 'swaylock --screenshots --effect-blur 7x5 -f'
 
 
-# Bluetooth applet
-exec blueman-applet
-
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
 bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
@@ -164,6 +161,10 @@ bindsym Print exec grim -g "$(slurp)" - | swappy -f -
 #
 
     for_window [app_id="galculator"] floating enable
+    for_window [app_id="bluetui"] floating enable, border none, resize set 1170 780, move position center
+
+    # Bluetooth manager
+    bindsym Ctrl+Alt+b exec foot --app-id=bluetui -e bluetui
 
 #
 # Disable auto lock on full screen
