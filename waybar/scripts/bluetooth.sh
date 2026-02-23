@@ -5,7 +5,7 @@ ICON_BT_OFF=$'\U000F00B2'     # 󰂲 bluetooth off
 
 get_bluetooth_status() {
     local powered
-    powered=$(bluetoothctl show 2>/dev/null | grep -i "Powered:" | awk '{print $2}')
+    powered=$(echo -e 'show\nquit' | bluetoothctl 2>&1 | grep -i "Powered:" | awk '{print $2}')
 
     if [[ "$powered" != "yes" ]]; then
         printf '{"text": "%s", "tooltip": "Bluetooth is off", "class": "off"}\n' "$ICON_BT_OFF"
@@ -13,7 +13,7 @@ get_bluetooth_status() {
     fi
 
     local connected_devices
-    connected_devices=$(bluetoothctl devices Connected 2>/dev/null)
+    connected_devices=$(echo -e 'devices Connected\nquit' | bluetoothctl 2>&1 | grep "^Device")
 
     if [[ -z "$connected_devices" ]]; then
         printf '{"text": "%s", "tooltip": "No devices connected", "class": "disconnected"}\n' "$ICON_BT_ON"
