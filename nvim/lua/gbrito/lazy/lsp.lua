@@ -155,7 +155,7 @@ return {
 
         local servers = {
             odoo_lsp = {
-                filetypes = { 'javascript', 'xml', 'python' },
+                filetypes = { 'javascript', 'xml', 'python', 'csv' },
                 root_dir = function(fname)
                     local util = require('lspconfig.util')
                     local cwd = vim.fn.getcwd()
@@ -246,7 +246,7 @@ multiline-quotes = "double"
             configs.odoo_lsp = {
                 default_config = {
                     cmd = { 'odoo-lsp' },
-                    filetypes = { 'javascript', 'xml', 'python' },
+                    filetypes = { 'javascript', 'xml', 'python', 'csv' },
                     root_dir = function(fname)
                         -- Look for Odoo-specific files/directories
                         local root = lspconfig.util.root_pattern(
