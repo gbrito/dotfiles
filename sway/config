@@ -59,6 +59,9 @@ bindsym XF86Search exec $menu
 # Print
 bindsym Print exec grim -g "$(slurp)" - | swappy -f -
 
+# Screen recording toggle
+bindsym $mod+Print exec sh -c 'if pgrep -x wf-recorder > /dev/null; then pkill -INT wf-recorder; else wf-recorder -g "$(slurp)" -f ~/Videos/recording-$(date +%Y-%m-%d_%H-%M-%S).mp4; fi'
+
 ### Key bindings
 #
 # Basics:
