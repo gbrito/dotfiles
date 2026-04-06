@@ -35,6 +35,8 @@ vim.keymap.set("n", "<leader>x", function()
     vim.cmd('!' .. 'chmod +x ' .. filename)
 end, { silent = true, desc = "Make file executable" })
 
+vim.keymap.set("n", "<leader>u", "<cmd>Undotree<CR>", { desc = "Toggle undotree (built-in)" })
+
 vim.keymap.set("n", "<leader><leader>", function()
     vim.cmd("so")
 end, { desc = "Source current file" })

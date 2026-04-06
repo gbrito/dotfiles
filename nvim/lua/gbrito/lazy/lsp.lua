@@ -30,7 +30,7 @@ return {
             callback = function(event)
                 local map = function(keys, func, desc, mode)
                     mode = mode or 'n'
-                    vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
+                    vim.keymap.set(mode, keys, func, { buf = event.buf, desc = 'LSP: ' .. desc })
                 end
                 map('<leader>cn', vim.lsp.buf.rename, '[R]e[n]ame')
                 map('<leader>ca', vim.lsp.buf.code_action, 'Goto [C]ode [A]ction', { 'n', 'x' })
@@ -42,64 +42,6 @@ return {
                 map('gO', require('telescope.builtin').lsp_document_symbols, 'Open Document Symbols')
                 map('gW', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'Open Workspace Symbols')
                 map('gt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
-
-                -- Navigate to related diagnostic information
-                map('<leader>cc', function()
-                    local line = vim.fn.line('.') - 1
-                    local diagnostics = vim.diagnostic.get(0, { lnum = line })
-
-                    if #diagnostics == 0 then
-                        print("No diagnostics at cursor position")
-                        return
-                    end
-
-                    -- Collect all related locations
-                    local related_items = {}
-                    for _, diag in ipairs(diagnostics) do
-                        if diag.user_data and diag.user_data.lsp and diag.user_data.lsp.relatedInformation then
-                            for _, info in ipairs(diag.user_data.lsp.relatedInformation) do
-                                if info.location and info.location.uri then
-                                    local filename = vim.uri_to_fname(info.location.uri)
-                                    local lnum = info.location.range.start.line + 1
-                                    local col = info.location.range.start.character + 1
-                                    table.insert(related_items, {
-                                        filename = filename,
-                                        lnum = lnum,
-                                        col = col,
-                                        text = info.message,
-                                    })
-                                end
-                            end
-                        end
-                    end
-
-                    if #related_items == 0 then
-                        print("No related information found")
-                        return
-                    end
-
-                    -- If only one item, jump directly
-                    if #related_items == 1 then
-                        local item = related_items[1]
-                        vim.cmd('edit ' .. item.filename)
-                        vim.api.nvim_win_set_cursor(0, { item.lnum, item.col - 1 })
-                        return
-                    end
-
-                    -- Multiple items: use quickfix list
-                    local qf_items = {}
-                    for _, item in ipairs(related_items) do
-                        table.insert(qf_items, {
-                            filename = item.filename,
-                            lnum = item.lnum,
-                            col = item.col,
-                            text = item.text,
-                        })
-                    end
-
-                    vim.fn.setqflist(qf_items)
-                    vim.cmd('copen')
-                end, 'Navigate to related diagnostic information')
             end,
         })
 
@@ -108,26 +50,6 @@ return {
             float = {
                 border = 'rounded',
                 source = 'if_many',
-                -- Format function to include related information
-                format = function(diagnostic)
-                    local message = diagnostic.message
-                    -- Check for related information from LSP
-                    if diagnostic.user_data and diagnostic.user_data.lsp then
-                        local related = diagnostic.user_data.lsp.relatedInformation
-                        if related and #related > 0 then
-                            message = message .. "\n\nRelated Information:"
-                            for _, info in ipairs(related) do
-                                message = message .. "\n• " .. info.message
-                                if info.location and info.location.uri then
-                                    local filename = vim.uri_to_fname(info.location.uri)
-                                    local line = info.location.range.start.line + 1
-                                    message = message .. " (" .. filename .. ":" .. line .. ")"
-                                end
-                            end
-                        end
-                    end
-                    return message
-                end
             },
             underline = { severity = vim.diagnostic.severity.ERROR },
             signs = vim.g.have_nerd_font and {
