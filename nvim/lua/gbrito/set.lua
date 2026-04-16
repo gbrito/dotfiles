@@ -33,7 +33,7 @@ vim.opt.isfname:append("@-@")
 vim.opt.updatetime = 250
 vim.opt.timeoutlen = 300
 
-vim.opt.completeopt = 'menuone,noselect'
+vim.opt.completeopt = "menuone,noselect"
 
 vim.opt.colorcolumn = "80"
 
@@ -41,9 +41,11 @@ vim.opt.splitright = true
 vim.opt.splitbelow = true
 
 vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 vim.opt.confirm = true
 
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.opt.smoothscroll = true
+vim.opt.inccommand = "split"
+vim.opt.winborder = "rounded"
+vim.opt.pumborder = "rounded"
