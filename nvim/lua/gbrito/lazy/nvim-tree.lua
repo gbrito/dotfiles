@@ -13,7 +13,20 @@ return {
         { "nvim-tree/nvim-web-devicons" },
     },
     config = function()
+        local api = require("nvim-tree.api")
         local nvimtree = require("nvim-tree")
+
+        local function on_attach(bufnr)
+            api.map.on_attach.default(bufnr)
+
+            vim.keymap.set("n", "H", api.filter.dotfiles.toggle, {
+                buffer = bufnr,
+                noremap = true,
+                silent = true,
+                nowait = true,
+                desc = "Toggle Filter: Dotfiles",
+            })
+        end
 
         vim.g.loaded_netrw = 1
         vim.g.loaded_netrwPlugin = 1
@@ -21,6 +34,7 @@ return {
         vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF ]])
 
         nvimtree.setup({
+            on_attach = on_attach,
             view = {
                 width = 35,
                 relativenumber = true,
