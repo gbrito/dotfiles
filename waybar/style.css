@@ -70,6 +70,7 @@ window#waybar.chromium {
 #pulseaudio,
 #custom-media,
 #custom-bluetooth,
+#custom-power-profile,
 #tray,
 #mode,
 #idle_inhibitor,
@@ -162,6 +163,23 @@ label:focus {
 #custom-bluetooth.off {
     background-color: #666666;
     color: #aaaaaa;
+}
+
+#custom-power-profile {
+    background-color: #bbccdd;
+    color: #333333;
+}
+
+#custom-power-profile.power-saver {
+    color: #d9822b;
+}
+
+#custom-power-profile.balanced {
+    color: #2e7d32;
+}
+
+#custom-power-profile.performance {
+    color: #c73e3a;
 }
 
 #custom-media {

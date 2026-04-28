@@ -166,12 +166,13 @@ bindsym $mod+Print exec sh -c 'if pgrep -x wf-recorder > /dev/null; then pkill -
     for_window [app_id="galculator"] floating enable
     for_window [app_id="bluetui"] floating enable, border none, resize set 1170 780, move position center
     for_window [app_id="impala"] floating enable, border none, resize set 1170 780, move position center
+    for_window [app_id="stui"] fullscreen enable
 
     # Bluetooth manager
-    bindsym Ctrl+Alt+b exec foot --app-id=bluetui -e bluetui
+    bindsym Ctrl+Alt+b exec sh -c 'swaymsg "[app_id=\"bluetui\"] focus" || foot --app-id=bluetui -e bluetui'
 
     # Network manager
-    bindsym Ctrl+Alt+n exec foot --app-id=impala -e impala
+    bindsym Ctrl+Alt+n exec sh -c 'swaymsg "[app_id=\"impala\"] focus" || foot --app-id=impala -e impala'
 
 #
 # Disable auto lock on full screen

@@ -2,7 +2,7 @@
     "height": 30,
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "battery", "custom/bluetooth", "tray"],
+    "modules-right": ["pulseaudio", "network", "battery", "custom/power-profile", "custom/bluetooth", "tray"],
     "sway/mode": {
         "format": "<span style=\"italic\">{}</span>"
     },
@@ -56,7 +56,7 @@
         "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ifname}: {ipaddr}/{cidr}\nGateway: {gwaddr}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}\nGateway: {gwaddr}",
         "tooltip-format-disconnected": "Disconnected",
-        "on-click": "foot --app-id=impala -e impala"
+        "on-click": "swaymsg '[app_id=\"impala\"] focus' || foot --app-id=impala -e impala"
     },
     "pulseaudio": {
         // "scroll-step": 1, // %, can be a float
@@ -82,7 +82,17 @@
         "return-type": "json",
         "interval": 5,
         "exec": "$HOME/.config/waybar/scripts/bluetooth.sh",
-        "on-click": "foot --app-id=bluetui -e bluetui",
+        "on-click": "swaymsg '[app_id=\"bluetui\"] focus' || foot --app-id=bluetui -e bluetui",
+        "tooltip": true
+    },
+    "custom/power-profile": {
+        "exec": "$HOME/.config/waybar/scripts/power-profile.sh",
+        "return-type": "json",
+        "interval": 5,
+        "format": "{}",
+        "on-click": "$HOME/.config/waybar/scripts/power-profile.sh toggle && pkill -RTMIN+10 waybar",
+        "on-click-right": "swaymsg '[app_id=\"stui\"] focus' || foot --app-id=stui -e s-tui",
+        "signal": 10,
         "tooltip": true
     }
 }
