@@ -83,6 +83,9 @@ return {
 
 		telescope.setup({
 			extensions = {
+				live_grep_args = {
+					additional_args = { "--follow" },
+				},
 				["ui-select"] = {
 					require("telescope.themes").get_dropdown(),
 				},
@@ -90,7 +93,7 @@ return {
 			defaults = {
 				vimgrep_arguments = {
 					"rg",
-					"-L",
+					"--follow",
 					"--color=never",
 					"--no-heading",
 					"--with-filename",
