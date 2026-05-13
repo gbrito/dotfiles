@@ -283,8 +283,8 @@ function db_odoo_admin() {
 
     if [[ $# -eq 2 ]] ; then
         db_login="${2}"
-        # Validate login to prevent injection (allow alphanumeric, underscore, dash, @, .)
-        if ! [[ "${db_login}" =~ ^[a-zA-Z0-9_@.-]+$ ]]; then
+        # Validate login to prevent injection (allow alphanumeric, underscore, dash, @, ., space)
+        if ! [[ "${db_login}" =~ ^[a-zA-Z0-9_@.\ -]+$ ]]; then
             echo "Error: Invalid login format: ${db_login}" >&2
             return 1
         fi
@@ -293,11 +293,18 @@ function db_odoo_admin() {
     echo "Changing admin username and password for user ${db_login}"
 
     # Use dollar-quoting to safely escape the login parameter
-    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "UPDATE res_users SET password = 'admin', login = 'admin', active = True WHERE login = \$\$${db_login}\$\$;" || {
-        echo "Error: Failed to update admin user" >&2
-        return 1
-    }
+    local rows_updated
+    rows_updated=$(docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" -t -A \
+        -c "UPDATE res_users SET password = 'admin', login = 'admin', active = True WHERE login = \$\$${db_login}\$\$ RETURNING id;" | grep -c '^[0-9]')
+
+    if [[ "${rows_updated}" -eq 0 ]]; then
+        echo "No user found with login '${db_login}', falling back to user id=2"
+        docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+            -c "UPDATE res_users SET password = 'admin', login = 'admin', active = True WHERE id = 2;" || {
+            echo "Error: Failed to update admin user" >&2
+            return 1
+        }
+    fi
 }
 
 function db_restore() {
