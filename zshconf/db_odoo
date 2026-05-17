@@ -213,6 +213,20 @@ function db_odoo_disable_users_totp() {
         return 1
     }
 
+    # Odoo 16+ stores 2FA enrollment in auth_totp_device
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DO \$\$ BEGIN IF to_regclass('public.auth_totp_device') IS NOT NULL THEN DELETE FROM auth_totp_device; END IF; END \$\$;" || {
+        echo "Error: Failed to delete auth_totp_device entries" >&2
+        return 1
+    }
+
+    # Odoo 17+ policy 'all_required'/'employee_required' forces 2FA
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "UPDATE ir_config_parameter SET value = 'no_enforcement' WHERE key = 'auth_totp.policy';" || {
+        echo "Error: Failed to disable TOTP policy" >&2
+        return 1
+    }
+
     echo "Disable auth_password_policy.minlength"
     docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
         -c "DELETE FROM ir_config_parameter WHERE key = 'auth_password_policy.minlength';" || {
