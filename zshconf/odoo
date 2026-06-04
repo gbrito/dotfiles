@@ -71,6 +71,32 @@ function odoo() {
     # Always use script for proper PTY allocation (needed for pdb debugging)
     if [ "$1" = "shell" ]; then
         script -q -c "$python_cmd $odoo_bin $1 -c $config; echo \$? > /tmp/odoo_exit_code.$$" /dev/null
+    elif [ "$1" = "neutralize" ]; then
+        local db_name
+        db_name=$(grep -m1 -oP '^\s*db_name\s*=\s*\K[^#[:space:]]+' "$config")
+        if [ -z "$db_name" ]; then
+            echo "Error: No database name found in config file"
+            return 1
+        fi
+
+        if [ "$odoo_version" -ge 16 ]; then
+            echo "Running neutralization via Python shell (16+)"
+            script -q -c "$python_cmd $odoo_bin shell -c $(printf '%q' "$config") -d $(printf '%q' "$db_name") --logfile ''; echo \$? > /tmp/odoo_exit_code.$$" /dev/null <<'EOF'
+from odoo.modules.neutralize import neutralize_database
+env["ir.config_parameter"].init(force=True)
+neutralize_database(env.cr)
+env.cr.commit()
+exit()
+EOF
+        else
+            echo "Running neutralization via SQL (pre-16)"
+            if ! type db_odoo_reset >/dev/null 2>&1; then
+                echo "Error: db_odoo_reset helper is not loaded"
+                return 1
+            fi
+            db_odoo_reset "$db_name"
+            return $?
+        fi
     elif [ "$1" = "upgrade_code" ]; then
         shift  # Remove 'upgrade_code' from arguments
         script -q -c "$python_cmd $odoo_bin upgrade_code $(printf '%q ' "$@"); echo \$? > /tmp/odoo_exit_code.$$" /dev/null

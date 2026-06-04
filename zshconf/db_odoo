@@ -83,27 +83,97 @@ function db_odoo_reset() {
         return 1
     fi
 
-    echo "Deactivating Crons"
+    echo "Neutralizing database ${db_name}"
 
-    # Deactivate crons
-    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "UPDATE ir_cron SET active = false;" || {
-        echo "Error: Failed to deactivate crons" >&2
-        return 1
-    }
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" -v ON_ERROR_STOP=1 <<'EOF'
+-- Remove Map Box Token as it's only valid per DB url
+DELETE FROM ir_config_parameter
+ WHERE key = 'web_map.token_map_box';
 
-    # Delete mail servers
-    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "DELETE FROM fetchmail_server;" || {
-        echo "Error: Failed to delete fetchmail servers" >&2
-        return 1
-    }
+DO $$
+BEGIN
+    IF to_regclass('public.website') IS NOT NULL THEN
+        UPDATE website
+           SET domain = NULL,
+               cdn_activated = false;
+    END IF;
+END $$;
 
-    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
-        -c "DELETE FROM ir_mail_server;" || {
-        echo "Error: Failed to delete mail servers" >&2
+-- activate neutralization watermarks
+UPDATE ir_ui_view
+   SET active = true
+ WHERE key IN ('website.neutralize_ribbon', 'web.neutralize_banner');
+
+DO $$
+BEGIN
+    IF to_regclass('public.mail_template') IS NOT NULL THEN
+        -- deactivate mail template
+        UPDATE mail_template
+           SET mail_server_id = NULL;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF to_regclass('public.fetchmail_server') IS NOT NULL THEN
+        DELETE FROM fetchmail_server;
+    END IF;
+END $$;
+
+-- reset WEB Push Notification:
+-- * delete VAPID/JWT keys
+DELETE FROM ir_config_parameter
+ WHERE key IN ('mail.web_push_vapid_private_key', 'mail.web_push_vapid_public_key', 'mail.sfu_server_key');
+-- * delete delayed messages (CRON)
+DELETE FROM ir_config_parameter
+ WHERE key IN ('odoo_ocn.project_id', 'ocn.uuid');
+
+DO $$
+BEGIN
+    IF to_regclass('public.iap_account') IS NOT NULL THEN
+        UPDATE iap_account SET account_token = REGEXP_REPLACE(account_token, '(\+.*)?$', '+disabled');
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF to_regclass('public.ir_mail_server') IS NOT NULL THEN
+        DELETE FROM ir_mail_server;
+
+        -- insert dummy mail server to prevent using fallback servers specified using command line
+        IF EXISTS (
+            SELECT 1
+              FROM information_schema.columns
+             WHERE table_schema = 'public'
+               AND table_name = 'ir_mail_server'
+               AND column_name = 'smtp_authentication'
+        ) THEN
+            INSERT INTO ir_mail_server(name, smtp_port, smtp_host, smtp_encryption, active, smtp_authentication)
+            VALUES ('neutralization - disable emails', 1025, 'invalid', 'none', true, 'login');
+        ELSE
+            INSERT INTO ir_mail_server(name, smtp_port, smtp_host, smtp_encryption, active)
+            VALUES ('neutralization - disable emails', 1025, 'invalid', 'none', true);
+        END IF;
+    END IF;
+END $$;
+
+UPDATE ir_cron
+   SET active = false;
+
+-- neutralization flag for the database
+INSERT INTO ir_config_parameter (key, value)
+VALUES ('database.is_neutralized', 'true')
+    ON CONFLICT (key) DO
+       UPDATE SET value = 'true';
+
+-- disable iap_extract
+DELETE FROM ir_config_parameter WHERE key = 'iap_extract_endpoint';
+EOF
+    local neutralize_status=$?
+    if [[ ${neutralize_status} -ne 0 ]]; then
+        echo "Error: Failed to neutralize database" >&2
         return 1
-    }
+    fi
 
     db_odoo_fix_code "${db_name}" || return 1
     db_odoo_admin "${db_name}" || return 1
@@ -140,6 +210,12 @@ function db_odoo_fix_code() {
     docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
         -c "UPDATE ir_config_parameter SET value = \$\$${uuid}\$\$ WHERE key LIKE '%uuid%';" || {
         echo "Error: Failed to update UUID" >&2
+        return 1
+    }
+
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "INSERT INTO ir_config_parameter (key, value) VALUES ('database.uuid', \$\$${uuid}\$\$) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;" || {
+        echo "Error: Failed to ensure database UUID" >&2
         return 1
     }
 
@@ -762,5 +838,3 @@ function db_list {
         fi
     fi
 }
-
-
