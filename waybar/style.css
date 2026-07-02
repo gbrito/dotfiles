@@ -165,6 +165,16 @@ label:focus {
     color: #aaaaaa;
 }
 
+#custom-bluetooth.low-battery {
+    background-color: #f53c3c;
+    color: #ffffff;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
 #custom-power-profile {
     background-color: #bbccdd;
     color: #333333;
