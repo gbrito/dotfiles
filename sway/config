@@ -76,6 +76,10 @@ bindsym $mod+Print exec sh -c 'if pgrep -x wf-recorder > /dev/null; then pkill -
     # Start your launcher
     bindsym $mod+d exec $menu
 
+    # Hold to dictate, release to transcribe
+    bindsym --no-repeat $mod+v exec voxtype record start
+    bindsym --release $mod+v exec voxtype record stop
+
     # Drag floating windows by holding down $mod and left mouse button.
     # Resize them with right mouse button + $mod.
     # Despite the name, also works for non-floating windows.
