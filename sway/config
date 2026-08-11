@@ -245,3 +245,7 @@ bindswitch --reload --locked lid:on output $laptop_monitor disable
 xwayland enable
 
 include /etc/sway/config.d/*
+
+# Bridge Sway's lifecycle and environment to graphical systemd user services.
+exec "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP; systemctl --user start sway-session.target"
+exec swaymsg -t subscribe '["shutdown"]' && systemctl --user stop sway-session.target

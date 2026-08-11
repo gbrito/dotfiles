@@ -1,4 +1,4 @@
-if [ -z "${WAYLAND_DISPLAY}" ] && [ "${XDG_VTNR}" -eq 1 ]; then
+if [ -z "${TMUX}" ] && [ -z "${WAYLAND_DISPLAY}" ] && [ "${XDG_VTNR:-0}" -eq 1 ]; then
     _sway_log_dir="$HOME/.local/log"
     mkdir -p "$_sway_log_dir"
     # Clean up sway logs older than 30 days
