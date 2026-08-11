@@ -817,24 +817,42 @@ function db_list {
     # Usage: db_list [pattern]
     # Examples: db_list, db_list test, db_list "test_*"
 
-    if [[ $# -eq 0 ]]; then
-        # No pattern - show all databases
-        docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list
-    else
-        local pattern="${1}"
+    local database_filter=''
+    local filter_clause=''
 
-        # Check if pattern contains wildcards
-        if [[ "${pattern}" == *"*"* ]] || [[ "${pattern}" == *"?"* ]]; then
-            # Convert wildcards to regex for grep
-            local grep_pattern="${pattern//\*/.*}"
-            grep_pattern="${grep_pattern//\?/.}"
-            # List databases and filter with grep
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | head -n 3
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | grep -E "^ ${grep_pattern}" || true
+    if [[ $# -gt 0 ]]; then
+        database_filter="${1}"
+
+        if [[ "${database_filter}" == *"*"* ]] || [[ "${database_filter}" == *"?"* ]]; then
+            database_filter="^${database_filter//\*/.*}"
+            database_filter="${database_filter//\?/.}"
+            filter_clause="WHERE datname ~ :'database_filter'"
         else
-            # Simple pattern - use grep for partial match
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | head -n 3
-            docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres --list | grep -i "${pattern}" || true
+            filter_clause="WHERE datname ~* :'database_filter'"
         fi
+    fi
+
+    local query="
+WITH database_sizes AS (
+    SELECT datname, pg_database_size(datname) AS size_bytes
+      FROM pg_database
+      ${filter_clause}
+), listed_databases AS (
+    SELECT datname AS name, size_bytes, false AS is_total
+      FROM database_sizes
+    UNION ALL
+    SELECT 'TOTAL', COALESCE(SUM(size_bytes), 0), true
+      FROM database_sizes
+)
+SELECT name AS \"Name\",
+       ROUND(size_bytes::numeric / 1024 / 1024 / 1024, 2) AS \"Size (GB)\"
+  FROM listed_databases
+ ORDER BY is_total, size_bytes DESC, name;
+"
+
+    if ! docker_psql "${DB_USER}" "${DB_PASSWORD}" -d postgres \
+        -v "database_filter=${database_filter}" <<< "${query}"; then
+        echo "Error: Failed to list databases" >&2
+        return 1
     fi
 }
