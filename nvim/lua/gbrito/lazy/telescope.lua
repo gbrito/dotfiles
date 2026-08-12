@@ -84,7 +84,8 @@ return {
 		telescope.setup({
 			extensions = {
 				live_grep_args = {
-					additional_args = { "--follow" },
+					debounce = 100,
+					temp__scrolling_limit = 100,
 				},
 				["ui-select"] = {
 					require("telescope.themes").get_dropdown(),
@@ -101,6 +102,8 @@ return {
 					"--column",
 					"--hidden",
 					"--smart-case",
+					"--glob=!*.{dump,sql,xlsx,zip}",
+					"--glob=!**/{.git,__pycache__,node_modules,.idea}/**",
 				},
 				file_ignore_patterns = {
 					"%.dump",
