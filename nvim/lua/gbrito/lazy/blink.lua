@@ -17,15 +17,11 @@ return {
 				end
 				return "make install_jsregexp"
 			end)(),
-			dependencies = { "rafamadriz/friendly-snippets" },
 			config = function()
 				require("luasnip.loaders.from_snipmate").lazy_load()
 			end,
 		},
-		"brenoprata10/nvim-highlight-colors",
 		"folke/lazydev.nvim",
-		"moyiz/blink-emoji.nvim",
-		"MahanRahmati/blink-nerdfont.nvim",
 	},
 	--- @module 'blink.cmp'
 	--- @type blink.cmp.Config
@@ -45,25 +41,10 @@ return {
 		sources = {
 			default = { "snippets", "lazydev", "lsp", "path", "buffer" },
 			providers = {
-
 				lazydev = {
 					name = "LazyDev",
 					module = "lazydev.integrations.blink",
 					score_offset = 100,
-				},
-				nerdfont = {
-					-- TODO: update appearance to only show emoji and not lsp symbol
-					module = "blink-nerdfont",
-					name = "Nerd Fonts",
-					score_offset = 15,
-					opts = { insert = true },
-				},
-				emoji = {
-					-- TODO: update appearance to only show emoji and not lsp symbol
-					module = "blink-emoji",
-					name = "Emoji",
-					score_offset = 25,
-					opts = { insert = true },
 				},
 			},
 		},
