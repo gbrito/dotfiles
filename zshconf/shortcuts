@@ -1,4 +1,5 @@
 alias rem_pyc="find . \( -name __pycache__ -o -name '*.pyc' \) -delete"
 alias ssh="TERM=xterm-256color ssh"
 alias redis="docker-compose up redis"
+alias psql="docker exec -i local-postgres psql"
 alias vim="nvim"
