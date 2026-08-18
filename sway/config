@@ -52,6 +52,8 @@ bindsym XF86AudioMicMute exec pactl set-source-mute @DEFAULT_SOURCE@ toggle
 bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
 bindsym XF86MonBrightnessUp exec brightnessctl set 5%+
 bindsym XF86AudioPlay exec playerctl play-pause
+bindsym --input-device=1278:33:PFU_Limited_HHKB-Hybrid XF86TouchpadToggle exec playerctl play-pause
+bindsym --input-device=1278:33:HHKB-Hybrid_1_Keyboard XF86TouchpadToggle exec playerctl play-pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 bindsym XF86Search exec $menu
