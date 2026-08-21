@@ -2,4 +2,15 @@ alias rem_pyc="find . \( -name __pycache__ -o -name '*.pyc' \) -delete"
 alias ssh="TERM=xterm-256color ssh"
 alias redis="docker-compose up redis"
 alias psql="docker exec -i local-postgres psql"
+unalias pg_restore 2>/dev/null
+pg_restore() {
+    local password="${PGPASSWORD:-}"
+
+    if [[ -z "${password}" ]]; then
+        read -rs "password?Password: " </dev/tty || return
+        print >&2
+    fi
+
+    PGPASSWORD="${password}" docker exec -e PGPASSWORD -i local-postgres pg_restore "$@"
+}
 alias vim="nvim"
