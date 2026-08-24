@@ -1,5 +1,5 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/.dotfiles/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH
+export PATH=$HOME/.dotfiles_work/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -49,13 +49,13 @@ else
     export EDITOR='nvim'
 fi
 
-# Load seperated config files
-for conf in "$HOME/.dotfiles/work/"*; do
+# Load separated config files
+for conf in "$HOME/.dotfiles_work/shell/"*(N.); do
     source "${conf}"
 done
 unset conf
 
-for conf in "$HOME/.dotfiles/zshconf/"*; do
+for conf in "$HOME/.dotfiles/zshconf/"*(N.); do
     source "${conf}"
 done
 unset conf
