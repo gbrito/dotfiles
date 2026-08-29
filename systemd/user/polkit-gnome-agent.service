@@ -1,0 +1,8 @@
+[Unit]
+Description=Polkit GNOME authentication agent
+PartOf=sway-session.target
+After=graphical-session-pre.target
+
+[Service]
+ExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+Restart=on-failure

@@ -2,4 +2,5 @@
 Description=Sway compositor session
 BindsTo=graphical-session.target
 Wants=graphical-session-pre.target
+Wants=polkit-gnome-agent.service
 After=graphical-session-pre.target

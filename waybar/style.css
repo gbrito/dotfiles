@@ -71,6 +71,7 @@ window#waybar.chromium {
 #custom-media,
 #custom-bluetooth,
 #custom-power-profile,
+#custom-wireguard,
 #tray,
 #mode,
 #idle_inhibitor,
@@ -138,6 +139,26 @@ label:focus {
 
 #network.disconnected {
     background-color: #f53c3c;
+}
+
+#custom-wireguard {
+    background-color: #bbccdd;
+    color: #888888;
+}
+
+#custom-wireguard.connected {
+    background-color: #26A65B;
+    color: #ffffff;
+}
+
+#custom-wireguard.connecting {
+    background-color: #d9822b;
+    color: #ffffff;
+}
+
+#custom-wireguard.error {
+    background-color: #f53c3c;
+    color: #ffffff;
 }
 
 #pulseaudio {

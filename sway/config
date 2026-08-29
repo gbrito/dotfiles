@@ -173,6 +173,7 @@ bindsym $mod+Print exec sh -c 'if pgrep -x wf-recorder > /dev/null; then pkill -
     for_window [app_id="bluetui"] floating enable, border none, resize set 1170 780, move position center
     for_window [app_id="impala"] floating enable, border none, resize set 1170 780, move position center
     for_window [app_id="stui"] fullscreen enable
+    for_window [app_id="wireguard-status"] floating enable, border none, resize set 1170 780, move position center
 
     # Bluetooth manager
     bindsym Ctrl+Alt+b exec sh -c 'swaymsg "[app_id=\"bluetui\"] focus" || foot --app-id=bluetui -e bluetui'
