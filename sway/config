@@ -185,7 +185,7 @@ bindsym $mod+Print exec sh -c 'if pgrep -x wf-recorder > /dev/null; then pkill -
 # Disable auto lock on full screen
 #
 
-    for_window [app_id=".*"] inhibit_idle fullscreen
+    for_window [all] inhibit_idle fullscreen
 
 #
 # Resizing containers:

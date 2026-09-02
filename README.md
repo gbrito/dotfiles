@@ -21,7 +21,8 @@ Preview without changing the system:
 ~/.dotfiles/install.sh --dry-run
 ```
 
-Deploy only the configuration links without installing or updating packages:
+Deploy only the configuration without installing or updating packages. This may
+request sudo access when system-wide configuration needs updating:
 
 ```bash
 ~/.dotfiles/install.sh --link-only

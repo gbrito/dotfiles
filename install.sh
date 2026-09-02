@@ -169,6 +169,20 @@ deploy_dotfiles() {
     link_path "${SCRIPT_DIR}/Thunar/uca.xml" "${HOME}/.config/Thunar/uca.xml"
 }
 
+deploy_system_config() {
+    local source="${SCRIPT_DIR}/etc/systemd/logind.conf.d/90-power-key.conf"
+    local target="/etc/systemd/logind.conf.d/90-power-key.conf"
+
+    log "Deploying system configuration"
+    if cmp -s -- "${source}" "${target}"; then
+        log "Already installed: ${target}"
+        return 0
+    fi
+
+    run sudo install -Dm0644 -- "${source}" "${target}"
+    run sudo systemctl reload systemd-logind.service
+}
+
 reload_tmux_config() {
     if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
         log "Reloading the running tmux server"
@@ -206,6 +220,7 @@ main() {
         install_packages
     fi
     deploy_dotfiles
+    deploy_system_config
     reload_tmux_config
     if [[ "${link_only}" == false ]]; then
         install_user_tools
