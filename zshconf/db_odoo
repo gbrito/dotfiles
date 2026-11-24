@@ -397,18 +397,49 @@ function db_odoo_admin() {
     fi
 }
 
+function db_filter_auditlog() {
+    # Drop the audit log data (not the rules) from a plain SQL dump on stdin
+    LC_ALL=C awk '
+        skip { if ($0 == "\\.") skip = 0; next }
+        /^COPY ("?public"?\.)?"?auditlog_(log|log_line|http_request|http_session)"? / { skip = 1; next }
+        { print }
+    '
+}
+
+function db_odoo_disable_auditlog() {
+    # arg$1 - Database name
+    local db_name="${1}"
+
+    if ! validate_db_name "${db_name}"; then
+        return 1
+    fi
+
+    echo "Disabling audit log rules"
+    docker_psql "${DB_USER}" "${DB_PASSWORD}" -d "${db_name}" \
+        -c "DO \$\$ BEGIN IF to_regclass('public.auditlog_rule') IS NOT NULL THEN UPDATE auditlog_rule SET state = 'draft'; END IF; END \$\$;" || {
+        echo "Error: Failed to disable audit log rules" >&2
+        return 1
+    }
+}
+
 function db_restore() {
     # Parse arguments
     local db_name=""
     local restore_file=""
     local filestore_path=""
     local skip_clean=false
+    local with_auditlog=false
 
     # Process arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --skip-clean)
                 skip_clean=true
+                with_auditlog=true
+                shift
+                ;;
+            --with-auditlog)
+                with_auditlog=true
                 shift
                 ;;
             *)
@@ -445,6 +476,15 @@ function db_restore() {
         return 1
     fi
 
+    local reader=(cat "${restore_file}")
+    if [[ "${restore_file}" == *.zip ]]; then
+        if ! unzip -l "${restore_file}" dump.sql >/dev/null 2>&1; then
+            echo "Error: No dump.sql found in ${restore_file}" >&2
+            return 1
+        fi
+        reader=(unzip -p "${restore_file}" dump.sql)
+    fi
+
     # Terminate all connections to the database before dropping
     echo "Terminating existing connections to database ${db_name}..."
     docker_psql "${DB_ADMIN_USER}" "${DB_ADMIN_PASSWORD}" -d postgres \
@@ -462,12 +502,23 @@ function db_restore() {
         return 1
     }
 
-    # Load sql dump - pipe file content to docker
+    # Load sql dump (plain file or the dump.sql of an Odoo.sh zip) into docker
     echo "Loading SQL dump into ${db_name}..."
-    cat "${restore_file}" | docker_psql "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
-        echo "Error: Failed to restore database from ${restore_file}" >&2
-        return 1
-    }
+    if [[ "$with_auditlog" == true ]]; then
+        "${reader[@]}" | docker_psql "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
+            echo "Error: Failed to restore database from ${restore_file}" >&2
+            return 1
+        }
+    else
+        echo "Skipping audit log data (use --with-auditlog to restore it)"
+        "${reader[@]}" | db_filter_auditlog | docker_psql "${DB_USER}" "${DB_PASSWORD}" "${db_name}" || {
+            echo "Error: Failed to restore database from ${restore_file}" >&2
+            return 1
+        }
+        db_odoo_disable_auditlog "${db_name}" || {
+            echo "Warning: Failed to disable audit log rules" >&2
+        }
+    fi
 
     # Handle filestore if provided
     if [[ -n "$filestore_path" ]]; then
@@ -571,12 +622,18 @@ function db_dump_restore {
     local restore_file=""
     local filestore_path=""
     local skip_clean=false
+    local with_auditlog=false
 
     # Process arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --skip-clean)
                 skip_clean=true
+                with_auditlog=true
+                shift
+                ;;
+            --with-auditlog)
+                with_auditlog=true
                 shift
                 ;;
             *)
@@ -636,13 +693,33 @@ function db_dump_restore {
         return 1
     }
 
+    local restore_list_args=()
+    local restore_list="/tmp/db_dump_restore_${db_name}.list"
+    if [[ "$with_auditlog" != true ]]; then
+        echo "Skipping audit log data (use --with-auditlog to restore it)"
+        docker exec -i "${POSTGRES_CONTAINER}" pg_restore -l < "${restore_file}" \
+            | grep -vE '^[0-9]+; [0-9]+ [0-9]+ TABLE DATA [^ ]+ auditlog_(log|log_line|http_request|http_session) ' \
+            | docker exec -i "${POSTGRES_CONTAINER}" sh -c "cat > '${restore_list}'" || {
+            echo "Error: Failed to read the table of contents of ${restore_file}" >&2
+            return 1
+        }
+        restore_list_args=(-L "${restore_list}")
+    fi
+
     echo "Start restoring ${restore_file} in ${db_name}"
     cat "${restore_file}" | docker exec -i "${POSTGRES_CONTAINER}" \
         env PGPASSWORD="${DB_PASSWORD}" \
-        pg_restore -U "${DB_USER}" --no-owner --no-acl -d "${db_name}" || {
+        pg_restore -U "${DB_USER}" --no-owner --no-acl "${restore_list_args[@]}" -d "${db_name}" || {
         echo "Error: Failed to restore database from ${restore_file}" >&2
         return 1
     }
+
+    if [[ "$with_auditlog" != true ]]; then
+        docker exec "${POSTGRES_CONTAINER}" rm -f "${restore_list}"
+        db_odoo_disable_auditlog "${db_name}" || {
+            echo "Warning: Failed to disable audit log rules" >&2
+        }
+    fi
 
     # Handle filestore if provided
     if [[ -n "$filestore_path" ]]; then
