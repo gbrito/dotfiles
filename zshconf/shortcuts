@@ -13,4 +13,15 @@ pg_restore() {
 
     PGPASSWORD="${password}" docker exec -e PGPASSWORD -i local-postgres pg_restore "$@"
 }
+pg_dump() {
+    local password="${PGPASSWORD:-}"
+
+    if [[ -z "${password}" ]]; then
+        read -rs "password?Password: " </dev/tty || return
+        print >&2
+    fi
+
+    PGPASSWORD="${password}" docker exec -e PGPASSWORD -i local-postgres pg_dump "$@"
+}
+
 alias vim="nvim"
