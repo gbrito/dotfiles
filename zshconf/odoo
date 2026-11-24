@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+alias odoo20_venv="source /opt/odoo20/odoo20-venv/bin/activate"
 alias odoo19_venv="source /opt/odoo19/odoo19-venv/bin/activate"
 alias odoo18_venv="source /opt/odoo18/odoo18-venv/bin/activate"
 alias odoo17_venv="source /opt/odoo17/odoo17-venv/bin/activate"
